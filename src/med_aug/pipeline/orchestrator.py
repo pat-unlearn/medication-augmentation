@@ -50,6 +50,8 @@ class PipelineConfig:
             'confidence_threshold': self.confidence_threshold,
             'enable_web_research': self.enable_web_research,
             'enable_validation': self.enable_validation,
+            'enable_llm_classification': self.enable_llm_classification,
+            'llm_provider': self.llm_provider,
             'enable_checkpoints': self.enable_checkpoints,
             'checkpoint_interval': self.checkpoint_interval,
             'max_retries': self.max_retries,
@@ -97,7 +99,9 @@ class PipelineOrchestrator:
             'input_file': config.input_file,
             'output_path': config.output_path,
             'disease_module': config.disease_module,
-            'confidence_threshold': config.confidence_threshold
+            'confidence_threshold': config.confidence_threshold,
+            'enable_llm_classification': config.enable_llm_classification,
+            'llm_provider': config.llm_provider
         })
         
         logger.info(

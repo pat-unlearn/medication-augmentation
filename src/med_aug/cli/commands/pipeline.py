@@ -25,6 +25,8 @@ def run_pipeline(
     confidence: float = typer.Option(0.5, "--confidence", "-c", help="Confidence threshold"),
     no_web: bool = typer.Option(False, "--no-web", help="Disable web research"),
     no_validation: bool = typer.Option(False, "--no-validation", help="Disable validation"),
+    enable_llm: bool = typer.Option(False, "--llm", help="Enable LLM classification"),
+    llm_provider: str = typer.Option("claude_cli", "--llm-provider", help="LLM provider to use"),
     no_checkpoints: bool = typer.Option(False, "--no-checkpoints", help="Disable checkpoints"),
     resume_from: Optional[str] = typer.Option(None, "--resume", help="Resume from phase"),
     pipeline_id: Optional[str] = typer.Option(None, "--id", help="Pipeline ID for resume"),
@@ -50,6 +52,8 @@ def run_pipeline(
         confidence_threshold=confidence,
         enable_web_research=not no_web,
         enable_validation=not no_validation,
+        enable_llm_classification=enable_llm,
+        llm_provider=llm_provider,
         enable_checkpoints=not no_checkpoints,
         display_progress=True,
         progress_mode="rich"
@@ -64,6 +68,8 @@ def run_pipeline(
         f"Confidence: {confidence}\n"
         f"Web Research: {'✅' if not no_web else '❌'}\n"
         f"Validation: {'✅' if not no_validation else '❌'}\n"
+        f"LLM Classification: {'✅' if enable_llm else '❌'}\n"
+        f"LLM Provider: {llm_provider if enable_llm else 'N/A'}\n"
         f"Checkpoints: {'✅' if not no_checkpoints else '❌'}",
         title="Starting Pipeline"
     ))
