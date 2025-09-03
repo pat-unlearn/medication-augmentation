@@ -37,55 +37,55 @@ Clinical Data → Analysis → Extraction → Research → Classification → Ev
 }}%%
 flowchart TD
     %% Input and Start
-    A["📊 Clinical Dataset<br/><small>CSV/Excel/Parquet</small>"] 
-    
+    A["📊 Clinical Dataset<br/><small>CSV/Excel/Parquet</small>"]
+
     %% Phase 1: Data Ingestion
     A -->|"Load Data"| B["🔄 Data Ingestion Phase"]
     B -->|"Validate"| B1{File Valid?}
     B1 -->|"✅ Valid"| C["🔍 Column Analysis Phase"]
     B1 -->|"❌ Invalid"| ERROR1["💥 Error: Invalid File"]
-    
-    %% Phase 2: Column Analysis  
+
+    %% Phase 2: Column Analysis
     C -->|"Analyze"| C1["🎯 Find Medication Columns"]
     C1 -->|"Check Results"| C2{Medication Data<br/>Found?}
     C2 -->|"✅ Found"| D["💊 Medication Extraction Phase"]
     C2 -->|"❌ None Found"| ERROR2["💥 Error: No Medication Data"]
-    
+
     %% Phase 3: Medication Extraction
     D -->|"Extract Names"| D1["🧹 Clean & Normalize<br/>Medication Names"]
     D1 -->|"Process"| D2["📋 Deduplicate Results"]
-    
+
     %% Optional: Web Research
     D2 -->|"Check Config"| E{Web Research<br/>Enabled?}
     E -->|"✅ Yes"| F["🌐 Web Research Phase"]
     E -->|"❌ No"| G["🤖 LLM Classification Phase"]
-    
+
     F -->|"Search"| F1["📚 FDA Database"]
-    F -->|"Search"| F2["🏥 Clinical Guidelines"] 
+    F -->|"Search"| F2["🏥 Clinical Guidelines"]
     F -->|"Search"| F3["💊 Drug Databases"]
     F1 & F2 & F3 -->|"Merge Results"| G
-    
+
     %% Phase 4: LLM Classification
     G -->|"Load References"| G1["📋 Load conmeds_defaults.yml<br/>& Disease Module"]
     G1 -->|"Classify"| G2["🧠 Claude LLM Classification<br/>vs Ground Truth"]
     G2 -->|"Check Config"| G3{Evaluation<br/>Enabled?}
-    
+
     %% Phase 5: Evaluation (Optional but Recommended)
     G3 -->|"✅ Yes"| H["📊 Evaluation Phase"]
     G3 -->|"❌ No"| K["📤 Output Generation Phase"]
-    
+
     H -->|"Compare"| H1["🔍 Compare vs Ground Truth"]
     H1 -->|"Analyze"| H2["⚠️ Identify False Positives<br/>& False Negatives"]
     H2 -->|"Validate"| H3["🤖 LLM Validation of<br/>New Discoveries"]
     H3 -->|"Report"| H4["📈 Generate Quality Metrics<br/>& Recommendations"]
     H4 -->|"Continue"| K
-    
+
     %% Phase 6: Output Generation
     K -->|"Generate"| K1["📄 Create conmeds_augmented.yml"]
     K1 -->|"Export"| K2["📊 Export Classification Results"]
     K2 -->|"Create"| K3["📋 Generate Evaluation Reports"]
     K3 -->|"Complete"| L["✅ Pipeline Complete"]
-    
+
     %% Input Sources
     subgraph INPUTS ["📥 Input Sources"]
         direction TB
@@ -93,7 +93,7 @@ flowchart TD
         IN2["⚙️ Disease Module<br/><small>Drug Class Definitions</small>"]
         IN3["📊 Clinical Dataset<br/><small>Raw Medication Records</small>"]
     end
-    
+
     %% Output Deliverables
     subgraph OUTPUTS ["📤 Generated Outputs"]
         direction TB
@@ -102,17 +102,17 @@ flowchart TD
         OUT3["📋 classification_results.csv<br/><small>Detailed Results</small>"]
         OUT4["⏱️ pipeline_summary.json<br/><small>Execution Summary</small>"]
     end
-    
+
     %% Connect inputs and outputs with dotted lines
     IN1 -.->|"Reference"| G1
     IN2 -.->|"Load"| G1
     IN3 -.->|"Process"| A
-    
+
     K1 -.->|"Generate"| OUT1
     H4 -.->|"Create"| OUT2
     K2 -.->|"Export"| OUT3
     K3 -.->|"Summary"| OUT4
-    
+
     %% Styling for dark mode compatibility
     classDef inputNode fill:#0969da,stroke:#1f6feb,stroke-width:2px,color:#ffffff
     classDef processNode fill:#238636,stroke:#2ea043,stroke-width:2px,color:#ffffff
@@ -121,7 +121,7 @@ flowchart TD
     classDef evaluationNode fill:#6f42c1,stroke:#8b5cf6,stroke-width:2px,color:#ffffff
     classDef outputNode fill:#0969da,stroke:#1f6feb,stroke-width:3px,color:#ffffff
     classDef primaryOutput fill:#238636,stroke:#2ea043,stroke-width:4px,color:#ffffff
-    
+
     %% Apply styles
     class A,IN1,IN2,IN3 inputNode
     class B,C,D,F,G,K processNode

@@ -1,6 +1,6 @@
 # Evaluation Module - Comprehensive Augmentation Quality Assessment
 
-**Version:** 1.0  
+**Version:** 1.0
 **Purpose:** Critical quality assurance system that validates medication classification accuracy and prevents false positives in conmeds.yml augmentation
 
 ---
@@ -12,7 +12,7 @@ The evaluation module is the **quality gateway** for the entire medication augme
 ### **Why This Module is Extremely Important**
 
 1. **Patient Safety**: Incorrect medication classifications can impact clinical research and patient care
-2. **Research Quality**: False positives in medication databases corrupt clinical trial analyses  
+2. **Research Quality**: False positives in medication databases corrupt clinical trial analyses
 3. **System Trust**: Quantitative evaluation builds confidence in automated augmentation
 4. **Continuous Improvement**: Metrics-driven feedback loop improves classification accuracy over time
 5. **Regulatory Compliance**: Auditable evaluation trails support FDA and clinical regulatory requirements
@@ -26,7 +26,7 @@ The evaluation module is the **quality gateway** for the entire medication augme
 ```
 evaluation/
 ├── __init__.py             # Module exports
-├── README.md              # This comprehensive documentation  
+├── README.md              # This comprehensive documentation
 ├── metrics.py             # Classification metrics (precision, recall, F1)
 ├── evaluator.py           # Main evaluation engine
 ├── llm_evaluator.py       # LLM-assisted validation
@@ -53,28 +53,28 @@ flowchart TD
     B --> C[📈 Calculate Metrics]
     C --> D[❌ Identify Errors]
     D --> E{High Error Rate?}
-    
+
     E -->|Yes| F[🤖 LLM Validation]
     E -->|No| G[✅ Accept Results]
-    
+
     F --> H[🧠 Clinical Assessment]
     H --> I{LLM Says Valid?}
-    
+
     I -->|Yes| J[➕ Add to Ground Truth]
     I -->|No| K[🚫 Flag as False Positive]
-    
+
     J --> L[📋 Generate Report]
     K --> L
     G --> L
-    
+
     L --> M[💾 Save Evaluation Data]
-    
+
     classDef inputNode fill:#0969da,stroke:#1f6feb,stroke-width:2px,color:#ffffff
-    classDef processNode fill:#238636,stroke:#2ea043,stroke-width:2px,color:#ffffff  
+    classDef processNode fill:#238636,stroke:#2ea043,stroke-width:2px,color:#ffffff
     classDef decisionNode fill:#9a6700,stroke:#bf8700,stroke-width:2px,color:#ffffff
     classDef llmNode fill:#6f42c1,stroke:#8b5cf6,stroke-width:2px,color:#ffffff
     classDef outputNode fill:#0969da,stroke:#1f6feb,stroke-width:3px,color:#ffffff
-    
+
     class A inputNode
     class B,C,D,H,M processNode
     class E,I decisionNode
@@ -94,19 +94,19 @@ flowchart TD
 class ClassificationMetrics:
     drug_class: str
     true_positives: int = 0      # Correctly classified medications
-    false_positives: int = 0     # Incorrectly classified as this class  
+    false_positives: int = 0     # Incorrectly classified as this class
     false_negatives: int = 0     # Should be this class but missed
-    
+
     @property
     def precision(self) -> float:
         """TP / (TP + FP) - How many predictions are correct"""
         return self.true_positives / (self.true_positives + self.false_positives)
-    
+
     @property
     def recall(self) -> float:
         """TP / (TP + FN) - How many actual cases we found"""
         return self.true_positives / (self.true_positives + self.false_negatives)
-    
+
     @property
     def f1_score(self) -> float:
         """2 * (precision * recall) / (precision + recall)"""
@@ -115,18 +115,18 @@ class ClassificationMetrics:
 
 #### **Overall System Metrics**
 ```python
-@dataclass  
+@dataclass
 class EvaluationMetrics:
     # Macro-averaged: Simple average across all classes
     macro_precision: float    # Average precision per class
-    macro_recall: float       # Average recall per class  
+    macro_recall: float       # Average recall per class
     macro_f1: float          # Average F1 per class
-    
+
     # Weighted: Weighted by class frequency (ground truth support)
     weighted_precision: float # Precision weighted by class size
     weighted_recall: float    # Recall weighted by class size
     weighted_f1: float       # F1 weighted by class size
-    
+
     # System-wide metrics
     overall_accuracy: float          # Total correct / total medications
     classification_coverage: float   # Classified / total medications
@@ -153,7 +153,7 @@ class EvaluationMetrics:
 def create_from_existing_conmeds(self, conmeds_file: Path) -> GroundTruthDataset:
     """
     Creates ground truth from manually curated conmeds_defaults.yml.
-    
+
     This gives us:
     - 57 NSCLC drug classes
     - ~147 medications with expert validation
@@ -162,16 +162,16 @@ def create_from_existing_conmeds(self, conmeds_file: Path) -> GroundTruthDataset
 ```
 
 #### **2. Expert-Validated Classifications**
-```python 
+```python
 def create_from_expert_validation(
     self,
     medications: List[str],
-    expert_classifications: Dict[str, str], 
+    expert_classifications: Dict[str, str],
     expert_name: str = "clinical_expert"
 ) -> GroundTruthDataset:
     """
     Creates ground truth from clinical expert review.
-    
+
     Used for:
     - Validating ambiguous medications
     - Creating disease-specific ground truth
@@ -182,15 +182,15 @@ def create_from_expert_validation(
 #### **3. LLM-Assisted Ground Truth Expansion**
 ```python
 async def suggest_ground_truth_updates(
-    self, 
-    llm_evaluations: List[LLMEvaluationResult], 
+    self,
+    llm_evaluations: List[LLMEvaluationResult],
     min_confidence: float = 0.8
 ) -> List[GroundTruthEntry]:
     """
     Expands ground truth with high-confidence LLM validations.
-    
+
     Criteria:
-    - LLM assessment: "correct" 
+    - LLM assessment: "correct"
     - LLM confidence: ≥0.8
     - Clinical reasoning provided
     """
@@ -204,7 +204,7 @@ async def suggest_ground_truth_updates(
 
 Traditional rule-based evaluation can't handle:
 - **Novel medications** not in ground truth
-- **Ambiguous classifications** across multiple classes  
+- **Ambiguous classifications** across multiple classes
 - **Emerging therapies** with new mechanisms of action
 - **Research nomenclature** vs. approved drug names
 
@@ -215,14 +215,14 @@ Traditional rule-based evaluation can't handle:
 async def _evaluate_single_classification(
     self,
     medication: str,
-    predicted_class: str, 
+    predicted_class: str,
     drug_classes_info: str
 ) -> LLMEvaluationResult:
     """
     Uses clinical expertise prompts to assess:
     1. Mechanism of action alignment
     2. FDA approval status for NSCLC
-    3. Clinical guideline recommendations  
+    3. Clinical guideline recommendations
     4. Drug naming conventions
     5. Treatment protocol standards
     """
@@ -237,7 +237,7 @@ async def evaluate_false_positives(
 ) -> Dict[str, List[LLMEvaluationResult]]:
     """
     Critical function that prevents corruption of ground truth.
-    
+
     For each "false positive":
     - Validates if it's actually a correct new discovery
     - Provides clinical reasoning
@@ -259,14 +259,14 @@ Respond with JSON:
 {
   "assessment": "correct|incorrect|ambiguous|unknown",
   "confidence": 0.95,
-  "reasoning": "Detailed clinical explanation", 
+  "reasoning": "Detailed clinical explanation",
   "alternative_classes": ["alt1", "alt2"],
   "clinical_notes": "Additional context"
 }
 
 Consider:
 1. Mechanism of action
-2. FDA approvals for NSCLC  
+2. FDA approvals for NSCLC
 3. Clinical guidelines (NCCN, ASCO)
 4. Standard treatment protocols
 5. Drug naming patterns
@@ -291,7 +291,7 @@ predictions = {
 
 confidence_scores = {
     "keytruda": 0.98,      # High confidence
-    "azd9291": 0.94,       # High confidence  
+    "azd9291": 0.94,       # High confidence
     "selpercatinib": 0.85, # Medium confidence
     "co-1686": 0.72,       # Lower confidence
 }
@@ -326,7 +326,7 @@ fp_evaluations = await llm_evaluator.evaluate_false_positives(
     "taking_selpercatinib": [
         LLMEvaluationResult(
             medication="selpercatinib",
-            predicted_class="taking_selpercatinib", 
+            predicted_class="taking_selpercatinib",
             llm_assessment="correct",
             confidence=0.92,
             reasoning="Selpercatinib is FDA-approved RET inhibitor for RET+ NSCLC (2020)",
@@ -354,7 +354,7 @@ for update in ground_truth_updates:
 evaluation_summary = {
     "overall_metrics": {
         "weighted_f1": 0.94,
-        "precision": 0.96, 
+        "precision": 0.96,
         "recall": 0.92,
         "coverage": 0.97
     },
@@ -409,11 +409,11 @@ evaluation_summary = {
     },
     "taking_osimertinib": {
       "precision": 0.857,
-      "recall": 1.000, 
+      "recall": 1.000,
       "f1_score": 0.923,
       "support": 6,
       "true_positives": 6,
-      "false_positives": 1, 
+      "false_positives": 1,
       "false_negatives": 0
     }
   }
@@ -434,7 +434,7 @@ evaluation_summary = {
     "misclassifications": [
       {
         "medication": "mobocertinib",
-        "predicted": "taking_gefitinib", 
+        "predicted": "taking_gefitinib",
         "actual": "taking_mobocertinib"  # New class needed
       }
     ]
@@ -502,22 +502,22 @@ evaluation_summary = {
 def make_augmentation_decision(evaluation_report: ClassificationReport) -> str:
     """
     Decision logic for accepting/rejecting augmentation results.
-    
+
     Returns: "accept", "review_needed", or "reject"
     """
     metrics = evaluation_report.metrics
-    
+
     # High quality - auto accept
-    if (metrics.weighted_f1 >= 0.90 and 
+    if (metrics.weighted_f1 >= 0.90 and
         metrics.weighted_precision >= 0.95 and
         metrics.classification_coverage >= 0.95):
         return "accept"
-    
+
     # Low quality - reject
-    if (metrics.weighted_f1 < 0.85 or 
+    if (metrics.weighted_f1 < 0.85 or
         metrics.weighted_precision < 0.90):
         return "reject"
-    
+
     # Medium quality - needs review
     return "review_needed"
 ```
@@ -557,7 +557,7 @@ from src.med_aug.evaluation import LLMAssistedEvaluator
 # Initialize LLM evaluator
 llm_evaluator = LLMAssistedEvaluator()
 
-# Validate false positives 
+# Validate false positives
 fp_results = await llm_evaluator.evaluate_false_positives(
     report.false_positives,
     max_per_class=5
@@ -565,7 +565,7 @@ fp_results = await llm_evaluator.evaluate_false_positives(
 
 # Generate ground truth suggestions
 ground_truth_updates = await llm_evaluator.suggest_ground_truth_updates(
-    llm_evaluations=fp_results, 
+    llm_evaluations=fp_results,
     min_confidence=0.8
 )
 
@@ -577,7 +577,7 @@ print(f"Suggested {len(ground_truth_updates)} ground truth additions")
 # Compare classification improvements
 comparison = evaluator.compare_before_after(
     before_predictions=original_classifications,
-    after_predictions=augmented_classifications, 
+    after_predictions=augmented_classifications,
     confidence_scores=confidence_scores
 )
 
@@ -633,7 +633,7 @@ if config.enable_evaluation:
         predictions=classification_results,
         confidence_scores=llm_confidence_scores
     )
-    
+
     # Store evaluation results for final report
     pipeline_state.evaluation_report = evaluation_report
 ```
@@ -646,8 +646,8 @@ decision = make_augmentation_decision(evaluation_report)
 if decision == "reject":
     logger.error("Evaluation failed - augmentation rejected")
     raise PipelineQualityError("Insufficient classification quality")
-    
-elif decision == "review_needed": 
+
+elif decision == "review_needed":
     logger.warning("Manual review required before augmentation")
     # Continue but flag for review
 ```
@@ -657,11 +657,11 @@ elif decision == "review_needed":
 # For ambiguous classifications, use LLM validation
 if evaluation_report.metrics.weighted_f1 < 0.90:
     llm_evaluator = LLMAssistedEvaluator()
-    
+
     llm_results = await llm_evaluator.evaluate_false_positives(
         evaluation_report.false_positives
     )
-    
+
     # Update classifications based on LLM validation
     validated_additions = filter_validated_additions(llm_results)
     final_classifications.update(validated_additions)
@@ -681,7 +681,7 @@ python -m src.med_aug.cli.app pipeline run \
 
 # Evaluation outputs generated:
 # - evaluation_report.json (detailed metrics)
-# - llm_validation_results.json (LLM assessments)  
+# - llm_validation_results.json (LLM assessments)
 # - ground_truth_updates.json (suggested additions)
 ```
 
@@ -691,7 +691,7 @@ python -m src.med_aug.cli.app pipeline run \
 
 ### **1. Clinical Accuracy is Paramount**
 - Every classification affects patient care research
-- False positives can corrupt clinical trial analyses  
+- False positives can corrupt clinical trial analyses
 - Conservative approach: "When in doubt, validate with experts"
 
 ### **2. Ground Truth Quality**
@@ -720,13 +720,13 @@ python -m src.med_aug.cli.app pipeline run \
 
 ### **Metrics Tracking**
 - Evaluation metrics trends over time
-- Ground truth quality indicators  
+- Ground truth quality indicators
 - LLM validation accuracy vs. expert review
 - False positive/negative pattern analysis
 
 ### **Feedback Loops**
 1. **Expert Review** → Ground Truth Updates
-2. **LLM Validation** → Classification Rule Improvements  
+2. **LLM Validation** → Classification Rule Improvements
 3. **Metrics Analysis** → Threshold Optimization
 4. **Error Patterns** → Training Data Enhancement
 
@@ -743,7 +743,7 @@ python -m src.med_aug.cli.app pipeline run \
 
 The evaluation module is successful when:
 
-- **Classification Quality**: Weighted F1 > 0.90 consistently  
+- **Classification Quality**: Weighted F1 > 0.90 consistently
 - **False Positive Prevention**: <5% of augmentations are clinically incorrect
 - **Ground Truth Expansion**: Validated new drug classes added quarterly
 - **Expert Confidence**: Clinical teams trust automated augmentations

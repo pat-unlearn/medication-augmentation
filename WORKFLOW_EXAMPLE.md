@@ -261,7 +261,7 @@ python -m src.med_aug.cli.app pipeline run \
 # EXISTING CLASS - AUGMENTED
 taking_osimertinib: [osimertinib, Tagrisso, AZD9291, AZD3759]  # +2 NEW
 
-# EXISTING CLASS - AUGMENTED  
+# EXISTING CLASS - AUGMENTED
 taking_rociletinib: [Rociletinib, CO-1686]  # +1 NEW
 
 # NEW DRUG CLASSES DISCOVERED
@@ -336,7 +336,7 @@ taking_pemetrexed: [pemetrexed, pemetrexed disodium, Alimta, Ciambra, Pemfexy, P
 
 ### **For Production Use:**
 1. **Review Additions**: Clinical team validates the 5 new medication names
-2. **Deploy Updated conmeds**: Replace existing file with augmented version  
+2. **Deploy Updated conmeds**: Replace existing file with augmented version
 3. **Monitor Impact**: Track improvement in medication matching rates
 4. **Schedule Regular Updates**: Run pipeline quarterly with new clinical data
 

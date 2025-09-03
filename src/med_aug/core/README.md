@@ -289,7 +289,7 @@ Comprehensive test coverage for:
 Clinical datasets contain messy, inconsistent medication data that requires sophisticated cleaning:
 
 - **Typos & Misspellings**: "pemebroxed" → "pemetrexed", "keytruda" → "pembrolizumab"
-- **Inconsistent Casing**: "PEMBROLIZUMAB" → "pembrolizumab" 
+- **Inconsistent Casing**: "PEMBROLIZUMAB" → "pembrolizumab"
 - **Dosage Contamination**: "pembrolizumab 200mg IV q3w" → "pembrolizumab"
 - **Formulation Noise**: "pemetrexed injection solution" → "pemetrexed"
 - **Abbreviations**: "pembro", "carbo/taxol" → standardized names
@@ -305,12 +305,12 @@ def _normalize_medication(self, medication: str) -> Optional[str]:
     """
     Comprehensive normalization pipeline handles:
     - Case standardization
-    - Whitespace cleanup  
+    - Whitespace cleanup
     - Dosage removal
     - Formulation stripping
     - Brand-generic mapping
     """
-    
+
     # Example transformations:
     # "PEMBROLIZUMAB 200MG IV" → "Pembrolizumab"
     # "pemetrexed disodium injection" → "Pemetrexed"
@@ -320,7 +320,7 @@ def _normalize_medication(self, medication: str) -> Optional[str]:
 #### **2. Dosage & Form Removal Patterns**
 ```python
 REMOVE_PATTERNS = [
-    r"\s+\d+\s*mg(?:/ml)?",      # 100mg, 50mg/ml  
+    r"\s+\d+\s*mg(?:/ml)?",      # 100mg, 50mg/ml
     r"\s+\d+\s*mcg",             # Microgram dosages
     r"\s+\d+\s*mg/kg",           # Per kg dosing
     r"\s+\d+\s*mg/m2",           # Per m2 dosing
@@ -339,7 +339,7 @@ REMOVE_PATTERNS = [
 ```python
 BRAND_GENERIC_MAP = {
     "keytruda": "pembrolizumab",
-    "opdivo": "nivolumab", 
+    "opdivo": "nivolumab",
     "tecentriq": "atezolizumab",
     "tagrisso": "osimertinib",
     "abraxane": "nab-paclitaxel",
@@ -367,13 +367,13 @@ def _extract_medications_from_text(self, text: str) -> List[str]:
 def _is_likely_medication(self, text: str) -> bool:
     """
     Pattern-based validation to filter non-medications:
-    
+
     Medication Patterns:
     - [drug]mab$ (monoclonal antibodies)
-    - [drug]nib$ (kinase inhibitors)  
+    - [drug]nib$ (kinase inhibitors)
     - [drug]platin$ (platinum compounds)
     - Known brand/generic names
-    
+
     Non-Medication Filters:
     - "yes", "no", "unknown", "n/a"
     - Obvious non-drug values
@@ -390,12 +390,12 @@ def _is_likely_medication(self, text: str) -> bool:
 "pembrolizumab 200mg IV q3w" → "Pembrolizumab"
 "pemetrexed 500mg/m2 injection" → "Pemetrexed"
 
-# Case inconsistencies  
+# Case inconsistencies
 "CARBOPLATIN" → "Carboplatin"
 "osimertinib hcl" → "Osimertinib"
 
 # Brand name conversion
-"keytruda 200mg" → "Pembrolizumab"  
+"keytruda 200mg" → "Pembrolizumab"
 "abraxane weekly" → "Nab-Paclitaxel"
 
 # Combination parsing
@@ -417,7 +417,7 @@ def _is_likely_medication(self, text: str) -> bool:
 variants_map = {
     "pembrolizumab": [
         "PEMBROLIZUMAB",
-        "pembrolizumab 200mg", 
+        "pembrolizumab 200mg",
         "Pembrolizumab IV",
         "keytruda",
         "Keytruda 200mg IV q3w"
@@ -451,7 +451,7 @@ Extract and standardize medication names from: $text
 Consider:
 - Common abbreviations (e.g., 'pembro' for pembrolizumab)
 - Misspellings and typos
-- Combination therapies (e.g., 'carbo/taxol') 
+- Combination therapies (e.g., 'carbo/taxol')
 - Dosage information that may be attached
 - Both generic and brand names
 """
@@ -469,14 +469,14 @@ Consider:
       "confidence": 0.95
     },
     {
-      "original": "carbo", 
+      "original": "carbo",
       "standardized": "carboplatin",
       "type": "abbreviation",
       "confidence": 0.98
     },
     {
       "original": "taxol",
-      "standardized": "paclitaxel", 
+      "standardized": "paclitaxel",
       "type": "brand_name",
       "confidence": 0.97
     }
@@ -492,7 +492,7 @@ def get_medication_statistics(self, result: ExtractionResult) -> Dict[str, Any]:
     """
     Comprehensive quality assessment:
     - Coverage rate (% rows with medications found)
-    - Variant diversity (multiple forms per medication)  
+    - Variant diversity (multiple forms per medication)
     - Frequency distribution (catch rare/suspicious entries)
     - Normalization success rate
     """
@@ -515,7 +515,7 @@ def get_medication_statistics(self, result: ExtractionResult) -> Dict[str, Any]:
 
 #### **❌ Not Currently Implemented**
 1. **Fuzzy String Matching**: No Levenshtein distance or similarity scoring
-2. **Phonetic Matching**: No Soundex/Metaphone for sound-alike drugs  
+2. **Phonetic Matching**: No Soundex/Metaphone for sound-alike drugs
 3. **Edit Distance Correction**: No automated typo correction algorithms
 4. **Machine Learning Normalization**: No trained models for drug name standardization
 5. **Context-Aware Correction**: No disambiguation using surrounding clinical context
@@ -532,7 +532,7 @@ def get_medication_statistics(self, result: ExtractionResult) -> Dict[str, Any]:
 ```python
 # Recommended processing order:
 1. Basic normalization (case, whitespace)
-2. Pattern-based cleaning (dosages, forms)  
+2. Pattern-based cleaning (dosages, forms)
 3. Brand-generic mapping
 4. Combination drug parsing
 5. LLM enhancement for complex cases
@@ -565,8 +565,8 @@ def get_medication_statistics(self, result: ExtractionResult) -> Dict[str, Any]:
 # Add fuzzy string matching capabilities
 from fuzzywuzzy import fuzz, process
 
-def find_closest_medication(query: str, 
-                          known_meds: List[str], 
+def find_closest_medication(query: str,
+                          known_meds: List[str],
                           threshold: int = 85) -> Optional[str]:
     """Find closest medication using edit distance."""
     match, score = process.extractOne(query, known_meds)
@@ -580,7 +580,7 @@ def find_closest_medication(query: str,
 
 #### **Phase 2: ML-Based Normalization**
 - Train medication name embeddings model
-- Context-aware medication disambiguation  
+- Context-aware medication disambiguation
 - Automated abbreviation detection
 - Clinical note parsing enhancement
 
@@ -607,7 +607,7 @@ def find_closest_medication(query: str,
 ```python
 # When normalization fails:
 1. Fall back to LLM processing
-2. Flag for manual expert review  
+2. Flag for manual expert review
 3. Web research for unknown compounds
 4. Context-based disambiguation
 5. Conservative approach: preserve original if uncertain
@@ -626,7 +626,7 @@ The core module integrates with:
 ## Future Enhancements Ideas
 
 - Machine learning-based column detection
-- Multi-language medication support  
+- Multi-language medication support
 - **Fuzzy matching for misspellings** (high priority)
 - Real-time streaming analysis
 - Custom medication dictionaries
