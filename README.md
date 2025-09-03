@@ -63,53 +63,65 @@ Raw Data  ->  Column Detection  ->  Name Extraction  ->  Web Research  ->  LLM C
 git clone <repository-url>
 cd medication-augmentation
 
-# Install dependencies
+# Install dependencies and CLI
 uv install
+uv pip install -e .
 
 # Install development tools
 uv add --dev black pytest ruff
+
+# Test installation
+source .venv/bin/activate
+med-aug info
 ```
 
 ## Quick Start
 
-### 1. Basic Pipeline Execution
+### 1. Activate Virtual Environment
 
 ```bash
-# Run for NSCLC (lung cancer)
-python -m src.med_aug.cli.app pipeline run \
-  --input data/clinical_data.csv \
+# Activate virtual environment (one-time per session)
+source .venv/bin/activate
+```
+
+### 2. Basic Pipeline Execution
+
+```bash
+# Augment existing conmeds for NSCLC (LLM enabled by default)
+med-aug pipeline run data/clinical_data.csv \
+  --conmeds data/conmeds_defaults.yml \
   --disease nsclc \
   --output ./output
 
-# Run for breast cancer (when module is available)
-python -m src.med_aug.cli.app pipeline run \
-  --input data/breast_cancer_data.csv \
+# Augment for breast cancer (when module is available)  
+med-aug pipeline run data/breast_cancer_data.csv \
+  --conmeds data/conmeds_defaults.yml \
   --disease breast_cancer \
   --output ./output
 
-# Enable LLM classification for any disease
-python -m src.med_aug.cli.app pipeline run \
-  --input data/clinical_data.csv \
+# Disable LLM if Claude CLI not available (not recommended)
+med-aug pipeline run data/clinical_data.csv \
+  --conmeds data/conmeds_defaults.yml \
   --disease nsclc \
-  --enable-llm \
+  --no-llm \
   --output ./output
 ```
 
-### 2. Disease Module Management
+### 3. Disease Module Management
 
 ```bash
 # List all available disease modules
-python -m src.med_aug.cli.app diseases list
+med-aug diseases list
 
 # Show specific disease module details
-python -m src.med_aug.cli.app diseases show nsclc
-python -m src.med_aug.cli.app diseases show breast_cancer
+med-aug diseases show nsclc
+med-aug diseases show breast_cancer
 
 # Validate a disease module configuration
-python -m src.med_aug.cli.app diseases validate nsclc
+med-aug diseases validate nsclc
 ```
 
-### 3. Output Files
+### 4. Output Files
 
 The pipeline generates:
 - **`conmeds_augmented.yml`** - Enhanced medication database (primary deliverable)
@@ -212,18 +224,19 @@ mypy src/
 ### Process MSK CHORD Dataset
 
 ```bash
-# Complete NSCLC augmentation with LLM classification
-python -m src.med_aug.cli.app pipeline run \
-  --input s3://dataset/nsclc_medication_data.csv \
+# Activate virtual environment first
+source .venv/bin/activate
+
+# Complete NSCLC augmentation (LLM enabled by default)
+med-aug pipeline run s3://dataset/nsclc_medication_data.csv \
+  --conmeds data/conmeds_defaults.yml \
   --disease nsclc \
-  --enable-llm \
   --output ./nsclc_output
 
 # Process breast cancer dataset
-python -m src.med_aug.cli.app pipeline run \
-  --input data/breast_cancer_treatments.csv \
+med-aug pipeline run data/breast_cancer_treatments.csv \
+  --conmeds data/conmeds_defaults.yml \
   --disease breast_cancer \
-  --enable-llm \
   --output ./breast_cancer_output
 ```
 
@@ -231,8 +244,8 @@ python -m src.med_aug.cli.app pipeline run \
 
 ```bash
 # Resume from specific phase (works for any disease)
-python -m src.med_aug.cli.app pipeline run \
-  --input data/clinical_data.csv \
+med-aug pipeline run data/clinical_data.csv \
+  --conmeds data/conmeds_defaults.yml \
   --disease nsclc \
   --resume-from llm_classification
 ```

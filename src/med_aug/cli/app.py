@@ -1,5 +1,24 @@
 """Main CLI application for medication augmentation system."""
 
+# Configure clean logging BEFORE any other imports
+import logging
+import structlog
+
+# Suppress noisy loggers for clean CLI output
+logging.getLogger().setLevel(logging.ERROR)
+logging.getLogger("med_aug").setLevel(logging.ERROR)
+
+# Configure structlog early
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.processors.add_log_level,
+        structlog.dev.ConsoleRenderer(colors=False),
+    ],
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    cache_logger_on_first_use=True,
+)
+
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -9,7 +28,7 @@ from pathlib import Path
 import sys
 import os
 
-# Import disease registry to trigger auto-discovery
+# Import disease registry to trigger auto-discovery (now with clean logging)
 from ..diseases import disease_registry
 
 # Import command modules
@@ -65,24 +84,29 @@ def main_callback(
     if not ctx.invoked_subcommand:
         return
 
-    log_level = "DEBUG" if debug else ("WARNING" if quiet else "INFO")
+    log_level = "DEBUG" if debug else ("ERROR" if quiet else "WARNING")
 
     # Setup logging
     if log_file:
         setup_logging(
             level=log_level, log_file=log_file, json_logs=False, include_timestamp=True
         )
+    elif debug:
+        # Only enable verbose logging if debug is explicitly requested
+        quick_setup(debug=True, log_to_file=False)
     else:
-        # Use quick setup for console logging
-        quick_setup(debug=debug, log_to_file=False)
+        # Minimal logging for clean CLI output
+        import logging
+        logging.getLogger().setLevel(logging.ERROR)
 
-    # Log application start
-    logger.info(
-        "application_started",
-        command=ctx.invoked_subcommand,
-        debug=debug,
-        config=str(config) if config else None,
-    )
+    # Only log application start in debug mode
+    if debug:
+        logger.info(
+            "application_started",
+            command=ctx.invoked_subcommand,
+            debug=debug,
+            config=str(config) if config else None,
+        )
 
     # Store config in context for subcommands
     if config:
@@ -191,26 +215,7 @@ def info_command():
 def main():
     """Main entry point for the CLI."""
     try:
-        # Configure structlog
-        import structlog
-
-        structlog.configure(
-            processors=[
-                structlog.stdlib.filter_by_level,
-                structlog.stdlib.add_logger_name,
-                structlog.stdlib.add_log_level,
-                structlog.stdlib.PositionalArgumentsFormatter(),
-                structlog.processors.TimeStamper(fmt="iso"),
-                structlog.processors.StackInfoRenderer(),
-                structlog.processors.format_exc_info,
-                structlog.dev.ConsoleRenderer(),
-            ],
-            context_class=dict,
-            logger_factory=structlog.stdlib.LoggerFactory(),
-            cache_logger_on_first_use=True,
-        )
-
-        # Run the app
+        # Run the app (logging already configured at module level)
         app()
     except KeyboardInterrupt:
         console.print("\n[yellow]Interrupted by user[/yellow]")

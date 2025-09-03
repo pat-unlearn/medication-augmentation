@@ -48,7 +48,7 @@ class DiseaseRegistry:
                             self._modules[disease_name] = disease_class
                             self._instances[disease_name] = instance
 
-                            logger.info(
+                            logger.debug(
                                 f"Discovered disease module",
                                 disease=disease_name,
                                 display_name=instance.display_name,
@@ -136,7 +136,7 @@ class DiseaseRegistry:
             self._modules[disease_name] = module_class
             self._instances[disease_name] = instance
 
-            logger.info(
+            logger.debug(
                 f"Manually registered disease module",
                 disease=disease_name,
                 display_name=instance.display_name,

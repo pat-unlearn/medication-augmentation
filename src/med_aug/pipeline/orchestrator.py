@@ -34,11 +34,12 @@ class PipelineConfig:
 
     input_file: str
     output_path: str = "./output"
+    conmeds_file: Optional[str] = None  # Existing conmeds.yml to augment
     disease_module: str = "nsclc"
     confidence_threshold: float = 0.5
     enable_web_research: bool = True
     enable_validation: bool = True
-    enable_llm_classification: bool = False  # Default to False since it requires CLI
+    enable_llm_classification: bool = True  # Default to True - core feature
     llm_provider: str = "claude_cli"  # Provider type for LLM
     enable_evaluation: bool = (
         False  # Enable comprehensive evaluation with LLM assistance

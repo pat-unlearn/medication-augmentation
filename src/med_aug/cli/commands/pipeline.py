@@ -19,9 +19,12 @@ app = typer.Typer()
 
 @app.command("run")
 def run_pipeline(
-    input_file: Path = typer.Argument(..., help="Input data file"),
+    input_file: Path = typer.Argument(..., help="Input clinical data file"),
     output_dir: Optional[Path] = typer.Option(
         None, "--output", "-o", help="Output directory"
+    ),
+    conmeds_file: Optional[Path] = typer.Option(
+        None, "--conmeds", help="Existing conmeds_defaults.yml to augment"
     ),
     disease: str = typer.Option(
         "nsclc",
@@ -36,7 +39,7 @@ def run_pipeline(
     no_validation: bool = typer.Option(
         False, "--no-validation", help="Disable validation"
     ),
-    enable_llm: bool = typer.Option(False, "--llm", help="Enable LLM classification"),
+    disable_llm: bool = typer.Option(False, "--no-llm", help="Disable LLM classification"),
     llm_provider: str = typer.Option(
         "claude_cli", "--llm-provider", help="LLM provider to use"
     ),
@@ -60,6 +63,18 @@ def run_pipeline(
         console.print(f"[red]Error: Input file not found: {input_file}[/red]")
         raise typer.Exit(1)
 
+    # Validate conmeds file if provided
+    if conmeds_file and not conmeds_file.exists():
+        console.print(f"[red]Error: Conmeds file not found: {conmeds_file}[/red]")
+        raise typer.Exit(1)
+
+    # Set default conmeds file if not provided
+    if conmeds_file is None:
+        conmeds_file = Path("data/conmeds_defaults.yml")
+        if not conmeds_file.exists():
+            console.print(f"[yellow]Warning: Default conmeds file not found: {conmeds_file}[/yellow]")
+            console.print("[yellow]Pipeline will create new conmeds.yml without augmenting existing entries[/yellow]")
+
     # Set output directory
     if output_dir is None:
         output_dir = Path.cwd() / "output" / f"pipeline_{Path(input_file).stem}"
@@ -70,11 +85,12 @@ def run_pipeline(
     config = PipelineConfig(
         input_file=str(input_file),
         output_path=str(output_dir),
+        conmeds_file=str(conmeds_file) if conmeds_file and conmeds_file.exists() else None,
         disease_module=disease,
         confidence_threshold=confidence,
         enable_web_research=not no_web,
         enable_validation=not no_validation,
-        enable_llm_classification=enable_llm,
+        enable_llm_classification=not disable_llm,
         llm_provider=llm_provider,
         enable_evaluation=enable_evaluation,
         enable_checkpoints=not no_checkpoints,
@@ -86,14 +102,15 @@ def run_pipeline(
     console.print(
         Panel(
             f"[bold blue]Pipeline Configuration[/bold blue]\n\n"
-            f"Input: {input_file}\n"
+            f"Clinical Data: {input_file}\n"
+            f"Conmeds File: {conmeds_file if conmeds_file and conmeds_file.exists() else '❌ None (creating new)'}\n"
             f"Output: {output_dir}\n"
             f"Disease: {disease}\n"
             f"Confidence: {confidence}\n"
             f"Web Research: {'✅' if not no_web else '❌'}\n"
             f"Validation: {'✅' if not no_validation else '❌'}\n"
-            f"LLM Classification: {'✅' if enable_llm else '❌'}\n"
-            f"LLM Provider: {llm_provider if enable_llm else 'N/A'}\n"
+            f"LLM Classification: {'✅' if not disable_llm else '❌'}\n"
+            f"LLM Provider: {llm_provider if not disable_llm else 'N/A'}\n"
             f"Checkpoints: {'✅' if not no_checkpoints else '❌'}",
             title="Starting Pipeline",
         )
