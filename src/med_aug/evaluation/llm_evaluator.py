@@ -2,14 +2,10 @@
 
 from typing import Dict, List, Optional, Any
 import json
-import asyncio
 from dataclasses import dataclass
-from pathlib import Path
 
 from ..llm.service import LLMService
-from ..llm.providers import LLMModel
-from .metrics import ClassificationReport
-from .ground_truth import GroundTruthManager, GroundTruthEntry
+from .ground_truth import GroundTruthEntry
 from ..core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -54,7 +50,7 @@ Please evaluate this classification and respond with a JSON object:
 
 **Assessment Guidelines:**
 - "correct": The medication clearly belongs to the predicted drug class
-- "incorrect": The medication clearly does NOT belong to the predicted drug class  
+- "incorrect": The medication clearly does NOT belong to the predicted drug class
 - "ambiguous": The medication could reasonably belong to multiple classes
 - "unknown": You cannot determine the classification (insufficient information)
 
@@ -80,7 +76,7 @@ For each medication, respond with a JSON array of objects:
 [
   {{
     "medication": "drug_name",
-    "predicted_class": "class_name", 
+    "predicted_class": "class_name",
     "assessment": "correct|incorrect|ambiguous|unknown",
     "confidence": 0.95,
     "reasoning": "Brief explanation",
@@ -206,7 +202,6 @@ Focus on NSCLC context and clinical accuracy."""
                 result.llm_assessment == "correct"
                 and result.confidence >= min_confidence
             ):
-
                 # This was marked as a false positive but LLM says it's correct
                 suggestion = GroundTruthEntry(
                     medication=result.medication,
@@ -443,7 +438,6 @@ Focus on NSCLC context and clinical accuracy."""
                 and result.alternative_classes
                 and result.confidence > 0.7
             ):
-
                 alternatives.append(
                     {
                         "medication": result.medication,
@@ -459,11 +453,6 @@ Focus on NSCLC context and clinical accuracy."""
         self, evaluations: List[LLMEvaluationResult]
     ) -> List[str]:
         """Extract key clinical insights from LLM reasoning."""
-        insights = []
-
-        # Look for common themes in reasoning
-        reasoning_texts = [r.reasoning for r in evaluations if r.clinical_notes]
-
         # This could be enhanced with more sophisticated text analysis
         # For now, just collect unique clinical notes
         clinical_notes = set()

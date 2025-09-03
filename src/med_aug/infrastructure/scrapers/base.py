@@ -83,7 +83,7 @@ class BaseScraper(ABC):
         # Initialize cache
         if cache is None:
             cache_config = CacheConfig(ttl_seconds=3600, max_size=1000)
-            self.cache = MemoryCache(cache_config)
+            self.cache: BaseCache = MemoryCache(cache_config)
         else:
             self.cache = cache
 
@@ -91,7 +91,7 @@ class BaseScraper(ABC):
         if rate_limiter is None:
             # Use the global domain rate limiter
             self.rate_limiter = _domain_limiter
-            self.rate_config = RateLimitConfig(
+            self.rate_config: Optional[RateLimitConfig] = RateLimitConfig(
                 requests_per_second=1.0 / config.rate_limit, burst_size=3
             )
         else:
@@ -204,20 +204,23 @@ class BaseScraper(ABC):
 
     def rate_limit(self):
         """Rate limiting context manager."""
+
         class RateLimitContext:
             def __init__(self, scraper):
                 self.scraper = scraper
-                
+
             async def __aenter__(self):
                 # Apply rate limiting using the domain from config
                 domain = urlparse(self.scraper.config.base_url).netloc
                 if self.scraper.rate_config:
-                    await self.scraper.rate_limiter.acquire(domain, self.scraper.rate_config)
+                    await self.scraper.rate_limiter.acquire(
+                        domain, self.scraper.rate_config
+                    )
                 return self
-                
+
             async def __aexit__(self, exc_type, exc_val, exc_tb):
                 pass
-                
+
         return RateLimitContext(self)
 
     @property
@@ -290,7 +293,7 @@ class BaseScraper(ABC):
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Convert exceptions to failed results
-        final_results = []
+        final_results: List[ScraperResult] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 final_results.append(
@@ -381,7 +384,7 @@ class CompositeScraper:
         Returns:
             Dictionary mapping scraper name to results
         """
-        results = {}
+        results: Dict[str, List[ScraperResult]] = {}
 
         tasks = []
         for scraper in self.scrapers:
@@ -409,7 +412,7 @@ class CompositeScraper:
         Returns:
             Merged medication information
         """
-        merged = {
+        merged: Dict[str, Any] = {
             "names": set(),
             "brand_names": set(),
             "generic_names": set(),

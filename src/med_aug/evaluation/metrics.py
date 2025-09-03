@@ -1,10 +1,9 @@
 """Evaluation metrics for medication classification."""
 
 from dataclasses import dataclass
-from typing import Dict, List, Set, Optional, Tuple, Any
-from collections import defaultdict, Counter
+from typing import Dict, List, Tuple, Any
+from collections import Counter
 import json
-from ..core.mixins import DictMixin
 
 
 @dataclass

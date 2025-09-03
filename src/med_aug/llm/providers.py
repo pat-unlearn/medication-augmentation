@@ -285,13 +285,13 @@ class ClaudeCLIProvider(LLMProvider):
 class MockProvider(LLMProvider):
     """
     Mock LLM provider for testing purposes only.
-    
+
     This class provides deterministic responses for unit tests and development.
     It should NOT be used in production environments.
-    
+
     Used by:
     - tests/unit/llm/test_classifier.py
-    - tests/unit/llm/test_service.py  
+    - tests/unit/llm/test_service.py
     - tests/unit/llm/test_providers.py
     """
 

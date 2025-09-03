@@ -1,11 +1,11 @@
 """Medication extraction and normalization module."""
 
 import re
-from typing import List, Dict, Any, Optional, Set, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Union
 from collections import Counter
 from pathlib import Path
 import pandas as pd
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from .models import Medication, MedicationType
 from .logging import get_logger, PerformanceLogger
@@ -121,7 +121,7 @@ class MedicationExtractor:
         self.normalization_cache = {}
 
     def extract_from_file(
-        self, file_path: str, column_name: str, sample_size: Optional[int] = None
+        self, file_path: Union[str, Path], column_name: str, sample_size: Optional[int] = None
     ) -> ExtractionResult:
         """
         Extract medications from a specific column in a file.
@@ -184,8 +184,8 @@ class MedicationExtractor:
 
         # Track original and normalized forms
         normalized_medications = []
-        frequency_map = {}
-        variants_map = {}
+        frequency_map: Dict[str, int] = {}
+        variants_map: Dict[str, List[str]] = {}
 
         for original_value in str_values:
             if not original_value or original_value.lower() in [
@@ -245,7 +245,6 @@ class MedicationExtractor:
         medications = []
 
         # First, check if it's a combination drug
-        is_combination = False
         for sep in self.COMBINATION_SEPARATORS:
             if sep in text:
                 # Special handling for dates (e.g., "2024-01-01")
@@ -255,7 +254,7 @@ class MedicationExtractor:
                 # Split by separator
                 parts = text.split(sep)
                 if len(parts) == 2 and all(len(p.strip()) > 2 for p in parts):
-                    is_combination = True
+                    # Found combination medication
                     for part in parts:
                         cleaned = part.strip()
                         if cleaned and self._is_likely_medication(cleaned):
@@ -412,7 +411,7 @@ class MedicationExtractor:
         Returns:
             Dictionary of statistics
         """
-        stats = {
+        stats: Dict[str, Any] = {
             "total_rows": result.total_rows,
             "unique_medications": result.unique_medications,
             "total_occurrences": sum(result.frequency_map.values()),
@@ -449,7 +448,10 @@ class MedicationExtractor:
         return stats
 
     def export_medications(
-        self, result: ExtractionResult, output_path: str, format: str = "csv"
+        self,
+        result: ExtractionResult,
+        output_path: Union[str, Path],
+        format: str = "csv",
     ) -> None:
         """
         Export extracted medications to file.

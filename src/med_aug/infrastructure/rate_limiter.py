@@ -28,7 +28,7 @@ class TokenBucketRateLimiter:
             config: Rate limiting configuration
         """
         self.config = config
-        self.tokens = config.burst_size
+        self.tokens: float = float(config.burst_size)
         self.last_refill = time.time()
         self._lock = asyncio.Lock()
 

@@ -1,10 +1,21 @@
 """Main CLI application for medication augmentation system."""
 
-# Configure clean logging BEFORE any other imports
-import structlog
-
-# Suppress noisy loggers for clean CLI output
 import logging
+import sys
+import structlog
+from pathlib import Path
+from typing import Optional
+
+import typer
+from rich.console import Console
+from rich.panel import Panel
+from rich.text import Text
+
+from .commands import diseases, pipeline
+from ..core.logging import setup_logging, get_logger, quick_setup
+from ..diseases import disease_registry
+
+# Configure clean logging
 logging.getLogger().setLevel(logging.ERROR)
 logging.getLogger("med_aug").setLevel(logging.ERROR)
 
@@ -18,23 +29,6 @@ structlog.configure(
     logger_factory=structlog.stdlib.LoggerFactory(),
     cache_logger_on_first_use=True,
 )
-
-import typer
-from rich.console import Console
-from rich.panel import Panel
-from rich.text import Text
-from typing import Optional
-from pathlib import Path
-import sys
-
-# Import disease registry to trigger auto-discovery (now with clean logging)
-from ..diseases import disease_registry
-
-# Import command modules
-from .commands import diseases, pipeline
-
-# Import logging
-from ..core.logging import setup_logging, get_logger, quick_setup
 
 console = Console()
 logger = get_logger(__name__)
@@ -119,9 +113,6 @@ def main_callback(
 
 def _display_welcome():
     """Display welcome banner with system information."""
-
-    title = Text("Medication Augmentation System", style="bold blue")
-
     content = Text()
     content.append("🎯 ", style="bold yellow")
     content.append("Intelligent medication discovery for clinical research\n\n")

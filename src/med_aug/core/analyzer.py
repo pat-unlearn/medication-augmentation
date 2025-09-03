@@ -1,12 +1,11 @@
 """Data analysis module for medication column detection and analysis."""
 
 import re
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 from pathlib import Path
 import pandas as pd
-from dataclasses import dataclass, field
 from .models import ColumnAnalysisResult
-from .logging import get_logger, PerformanceLogger, LogContext
+from .logging import get_logger, PerformanceLogger
 
 logger = get_logger(__name__)
 perf_logger = PerformanceLogger(logger)
@@ -93,7 +92,10 @@ class DataAnalyzer:
         logger.debug("analyzer_initialized")
 
     def analyze_file(
-        self, file_path: str, sample_size: int = 1000, confidence_threshold: float = 0.5
+        self,
+        file_path: Union[str, Path],
+        sample_size: int = 1000,
+        confidence_threshold: float = 0.5,
     ) -> List[ColumnAnalysisResult]:
         """
         Analyze dataset columns to identify medication columns.

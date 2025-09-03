@@ -1,16 +1,21 @@
 """Pipeline execution commands for the CLI."""
 
 import asyncio
+import json
 from pathlib import Path
 from typing import Optional
+
+import pandas as pd
 import typer
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 
+from ...core.analyzer import DataAnalyzer
+from ...core.extractor import MedicationExtractor
+from ...core.logging import get_logger
 from ...pipeline import PipelineOrchestrator, PipelineConfig
 from ...pipeline.checkpoint import CheckpointManager
-from ...core.logging import get_logger
 
 logger = get_logger(__name__)
 console = Console()
@@ -285,10 +290,6 @@ def analyze_file(
     ),
 ):
     """Analyze a file to identify medication columns."""
-
-    from ...core.analyzer import DataAnalyzer
-    import pandas as pd
-
     if not input_file.exists():
         console.print(f"[red]Error: File not found: {input_file}[/red]")
         raise typer.Exit(1)
@@ -348,11 +349,6 @@ def extract_medications(
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output file"),
 ):
     """Extract medications from a specific column."""
-
-    from ...core.extractor import MedicationExtractor
-    import pandas as pd
-    import json
-
     if not input_file.exists():
         console.print(f"[red]Error: File not found: {input_file}[/red]")
         raise typer.Exit(1)
