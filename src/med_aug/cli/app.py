@@ -7,14 +7,19 @@ from rich.text import Text
 from typing import Optional
 from pathlib import Path
 import sys
+import os
 
 # Import disease registry to trigger auto-discovery
 from ..diseases import disease_registry
 
 # Import command modules
-from .commands import diseases
+from .commands import diseases, pipeline
+
+# Import logging
+from ..core.logging import setup_logging, get_logger, quick_setup
 
 console = Console()
+logger = get_logger(__name__)
 
 app = typer.Typer(
     name="med-aug",
@@ -29,6 +34,7 @@ app = typer.Typer(
 
 # Add command groups
 app.add_typer(diseases.app, name="diseases", help="🔬 Manage disease modules")
+app.add_typer(pipeline.app, name="pipeline", help="🚀 Run augmentation pipeline")
 
 
 @app.callback()
@@ -36,6 +42,9 @@ def main_callback(
     ctx: typer.Context,
     version: bool = typer.Option(False, "--version", "-v", help="Show version"),
     config: Optional[Path] = typer.Option(None, "--config", "-c", help="Configuration file"),
+    debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug logging"),
+    log_file: Optional[Path] = typer.Option(None, "--log-file", help="Path to log file"),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress output"),
 ) -> None:
     """
     🏥 Medication Augmentation System
@@ -48,6 +57,32 @@ def main_callback(
         console.print("🏥 Medication Augmentation System v1.0.0", style="bold blue")
         raise typer.Exit()
     
+    # Setup logging based on options
+    if not ctx.invoked_subcommand:
+        return
+
+    log_level = "DEBUG" if debug else ("WARNING" if quiet else "INFO")
+
+    # Setup logging
+    if log_file:
+        setup_logging(
+            level=log_level,
+            log_file=log_file,
+            json_logs=False,
+            include_timestamp=True
+        )
+    else:
+        # Use quick setup for console logging
+        quick_setup(debug=debug, log_to_file=False)
+
+    # Log application start
+    logger.info(
+        "application_started",
+        command=ctx.invoked_subcommand,
+        debug=debug,
+        config=str(config) if config else None
+    )
+
     # Store config in context for subcommands
     if config:
         ctx.obj = {"config": config}
@@ -96,11 +131,13 @@ def _display_welcome():
 @app.command("test")
 def test_command():
     """Test command to verify CLI is working."""
+    logger.info("test_command_started")
     console.print("[bold green]✅ CLI is working correctly![/bold green]")
     
     # Test disease registry
     console.print("\n[bold]Testing disease registry...[/bold]")
     available = disease_registry.list_available()
+    logger.debug("disease_modules_check", available=available)
     
     if available:
         console.print(f"Found {len(available)} disease module(s): {', '.join(available)}")
@@ -111,9 +148,15 @@ def test_command():
             console.print(f"[green]✓[/green] NSCLC module loaded: {nsclc.display_name}")
             console.print(f"  - Drug classes: {len(nsclc.drug_classes)}")
             console.print(f"  - Total keywords: {len(nsclc.get_all_keywords())}")
+            logger.info(
+                "nsclc_module_loaded",
+                drug_classes=len(nsclc.drug_classes),
+                keywords=len(nsclc.get_all_keywords())
+            )
     else:
         console.print("[yellow]No disease modules auto-discovered yet[/yellow]")
         console.print("This is normal on first run - modules will be loaded when needed")
+        logger.warning("no_disease_modules_discovered")
 
 
 @app.command("info")

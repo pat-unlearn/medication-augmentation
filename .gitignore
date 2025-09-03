@@ -208,3 +208,4 @@ test-results/
 
 # Generated pairing files from conversation
 save_batch*_pairings.py
+/htmlcov/

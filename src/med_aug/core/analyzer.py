@@ -7,6 +7,10 @@ import pandas as pd
 import polars as pl
 from dataclasses import dataclass, field
 from .models import ColumnAnalysisResult
+from .logging import get_logger, PerformanceLogger, LogContext
+
+logger = get_logger(__name__)
+perf_logger = PerformanceLogger(logger)
 
 
 class DataAnalyzer:
@@ -55,6 +59,7 @@ class DataAnalyzer:
         """Initialize the analyzer."""
         self.analyzed_columns = []
         self.confidence_scores = {}
+        logger.debug("analyzer_initialized")
         
     def analyze_file(self, 
                      file_path: str, 

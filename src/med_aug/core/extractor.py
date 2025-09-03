@@ -9,6 +9,10 @@ import polars as pl
 from dataclasses import dataclass, field
 from datetime import datetime
 from .models import Medication, MedicationType
+from .logging import get_logger, PerformanceLogger
+
+logger = get_logger(__name__)
+perf_logger = PerformanceLogger(logger)
 
 
 @dataclass
