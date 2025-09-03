@@ -3,17 +3,9 @@
 from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from enum import Enum
 import asyncio
 
 from rich.console import Console
-from rich.progress import (
-    Progress,
-    SpinnerColumn,
-    TextColumn,
-    BarColumn,
-    TimeElapsedColumn,
-)
 from rich.table import Table
 from rich.live import Live
 from rich.layout import Layout
@@ -287,9 +279,11 @@ class ProgressTracker:
     def _start_rich_display(self):
         """Start rich progress display."""
         layout = self._create_layout()
-        self._live = Live(layout, refresh_per_second=2, console=console)  # Update twice per second
+        self._live = Live(
+            layout, refresh_per_second=2, console=console
+        )  # Update twice per second
         self._live.start()
-        
+
         # Start background task to update display continuously
         asyncio.create_task(self._continuous_update())
 

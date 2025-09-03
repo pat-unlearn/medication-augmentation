@@ -4,9 +4,6 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
 import json
-import subprocess
-import tempfile
-from pathlib import Path
 import asyncio
 from enum import Enum
 
@@ -17,6 +14,7 @@ logger = get_logger(__name__)
 
 class LLMError(Exception):
     """Exception raised for LLM-related errors."""
+
     pass
 
 
@@ -170,9 +168,11 @@ class ClaudeCLIProvider(LLMProvider):
 
             model = model_map.get(self.config.model, "sonnet")  # Default to sonnet
 
-            cmd = ['claude', '--model', model, '--print', simple_prompt]
+            cmd = ["claude", "--model", model, "--print", simple_prompt]
 
-            logger.debug("claude_cli_command", command=" ".join(cmd[:-1]) + " [prompt]")  # Don't log full prompt
+            logger.debug(
+                "claude_cli_command", command=" ".join(cmd[:-1]) + " [prompt]"
+            )  # Don't log full prompt
 
             # Execute command
             process = await asyncio.create_subprocess_exec(
@@ -220,7 +220,9 @@ class ClaudeCLIProvider(LLMProvider):
             logger.error("claude_cli_generation_failed", error=str(e))
             raise LLMError(f"Claude CLI failed: {e}")
 
-    def _simplify_prompt_for_cli(self, prompt: str, system: Optional[str] = None) -> str:
+    def _simplify_prompt_for_cli(
+        self, prompt: str, system: Optional[str] = None
+    ) -> str:
         """
         Simplify complex prompts for Claude CLI to avoid conversational responses.
 
@@ -235,6 +237,7 @@ class ClaudeCLIProvider(LLMProvider):
         if "classify" in prompt.lower() and "medication" in prompt.lower():
             # Extract medication name from prompt
             import re
+
             med_match = re.search(r"Medication:\s*([^\n]+)", prompt)
             if med_match:
                 medication = med_match.group(1).strip()

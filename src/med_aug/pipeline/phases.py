@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 from abc import ABC, abstractmethod
-import asyncio
 
 from ..core.logging import get_logger, PerformanceLogger
 
@@ -589,7 +588,7 @@ class LLMClassificationPhase(PipelinePhase):
             # Check if provider is available
             provider = ProviderFactory.create(provider_type, config)
             if not await provider.is_available():
-                logger.warning(f"llm_provider_not_available", provider=provider_type)
+                logger.warning("llm_provider_not_available", provider=provider_type)
                 # Fall back to mock provider for testing
                 provider = ProviderFactory.create("mock", config)
 
@@ -608,19 +607,25 @@ class LLMClassificationPhase(PipelinePhase):
                 medications[:20] if len(medications) > 20 else medications
             )
 
-            logger.info(f"classifying_medications", count=len(meds_to_classify))
+            logger.info("classifying_medications", count=len(meds_to_classify))
 
             # Create progress callback for live updates
             def llm_progress_callback(current: int, total: int, message: str):
-                logger.info("llm_classification_progress", 
-                          current=current, total=total, message=message)
+                logger.info(
+                    "llm_classification_progress",
+                    current=current,
+                    total=total,
+                    message=message,
+                )
                 # Update progress tracker if available
-                if hasattr(context, 'progress_tracker') and context['progress_tracker']:
+                if hasattr(context, "progress_tracker") and context["progress_tracker"]:
                     progress_percent = (current / total) * 100 if total > 0 else 0
-                    context['progress_tracker'].update_phase_progress(
-                        "llm_classification", progress_percent, f"{message} ({current}/{total})"
+                    context["progress_tracker"].update_phase_progress(
+                        "llm_classification",
+                        progress_percent,
+                        f"{message} ({current}/{total})",
                     )
-            
+
             # Use batch classification with progress tracking
             batch_result = await classifier.classify_batch(
                 meds_to_classify, batch_size=5, progress_callback=llm_progress_callback
@@ -773,7 +778,9 @@ class OutputGenerationPhase(PipelinePhase):
                     export_data,
                     conmeds_file,
                     title=f"NSCLC Medication Augmentation - {datetime.now().strftime('%Y-%m-%d')}",
-                    conmeds_file=context.get("conmeds_file"),  # Pass base conmeds for augmentation
+                    conmeds_file=context.get(
+                        "conmeds_file"
+                    ),  # Pass base conmeds for augmentation
                 )
                 artifacts.append(str(result_path))
 

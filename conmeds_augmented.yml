@@ -4,7 +4,7 @@
 
 # New medications found and classified
 taking_sotorasib:
-  medications: 
+  medications:
     - Sotorasib
   description: "KRAS G12C inhibitor for targeted therapy"
 

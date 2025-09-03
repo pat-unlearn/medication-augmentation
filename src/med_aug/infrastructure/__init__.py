@@ -13,7 +13,7 @@ from .rate_limiter import (
 
 __all__ = [
     "RateLimitConfig",
-    "TokenBucketRateLimiter", 
+    "TokenBucketRateLimiter",
     "AdaptiveRateLimiter",
     "DomainRateLimiter",
     "rate_limit",

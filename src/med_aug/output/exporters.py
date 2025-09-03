@@ -117,8 +117,6 @@ class ExcelExporter(BaseExporter):
             Path to exported file
         """
         import pandas as pd
-        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
-        from openpyxl.utils import get_column_letter
 
         logger.info("excel_export_started", path=str(output_path))
 
@@ -128,7 +126,6 @@ class ExcelExporter(BaseExporter):
 
         # Create Excel writer
         with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
-
             # Process each sheet
             for sheet_name, sheet_data in data.items():
                 if isinstance(sheet_data, list) and sheet_data:
@@ -574,7 +571,6 @@ class ConmedsYAMLExporter(BaseExporter):
         Returns:
             Path to exported conmeds.yml file
         """
-        import yaml
 
         logger.info("conmeds_yaml_export_started", path=str(output_path))
 
@@ -583,7 +579,7 @@ class ConmedsYAMLExporter(BaseExporter):
             output_path = output_path.with_suffix(".yml")
 
         # Load existing conmeds as base
-        base_conmeds = self._load_base_conmeds(kwargs.get('conmeds_file'))
+        base_conmeds = self._load_base_conmeds(kwargs.get("conmeds_file"))
 
         # Extract classifications from data
         classifications = data.get("classifications", {})
@@ -634,7 +630,10 @@ class ConmedsYAMLExporter(BaseExporter):
         import yaml
 
         if not conmeds_file:
-            logger.warning("no_base_conmeds_file", message="No base conmeds file provided, starting empty")
+            logger.warning(
+                "no_base_conmeds_file",
+                message="No base conmeds file provided, starting empty",
+            )
             return {}
 
         conmeds_path = Path(conmeds_file)
@@ -643,29 +642,32 @@ class ConmedsYAMLExporter(BaseExporter):
             return {}
 
         try:
-            with open(conmeds_path, 'r') as f:
+            with open(conmeds_path, "r") as f:
                 base_conmeds = yaml.safe_load(f)
-            
+
             if not isinstance(base_conmeds, dict):
                 logger.warning("invalid_base_conmeds_format", path=str(conmeds_path))
                 return {}
-            
+
             logger.info(
                 "base_conmeds_loaded",
                 path=str(conmeds_path),
                 drug_classes=len(base_conmeds),
-                total_medications=sum(len(meds) if isinstance(meds, list) else 0 for meds in base_conmeds.values())
+                total_medications=sum(
+                    len(meds) if isinstance(meds, list) else 0
+                    for meds in base_conmeds.values()
+                ),
             )
-            
+
             return base_conmeds
         except Exception as e:
-            logger.error("base_conmeds_load_error", path=str(conmeds_path), error=str(e))
+            logger.error(
+                "base_conmeds_load_error", path=str(conmeds_path), error=str(e)
+            )
             return {}
 
     def _augment_conmeds(
-        self, 
-        base_conmeds: Dict[str, List[str]], 
-        classifications: Dict[str, List[str]]
+        self, base_conmeds: Dict[str, List[str]], classifications: Dict[str, List[str]]
     ) -> Dict[str, List[str]]:
         """
         Augment base conmeds with new medication classifications.
@@ -728,12 +730,12 @@ class ConmedsYAMLExporter(BaseExporter):
     ) -> str:
         """Generate YAML content matching original format exactly."""
         lines = []
-        
+
         # Sort keys to match original order
         for key in sorted(conmeds.keys()):
             medications = conmeds[key]
             # Format as simple array on single line like original
             med_list = ", ".join(medications)
             lines.append(f"{key}: [{med_list}]")
-        
+
         return "\n".join(lines) + "\n"
