@@ -39,16 +39,21 @@ class MedicationExtractor:
     REMOVE_PATTERNS = [
         r'\s+\d+\s*mg(?:/ml)?',        # Dosage: 100mg, 50mg/ml
         r'\s+\d+\s*mcg',               # Microgram dosages
+        r'\s+\d+\s*mg/kg',             # Per kg dosing
+        r'\s+\d+\s*mg/m2',             # Per m2 dosing
         r'\s+\d+\s*ml',                 # Volume
         r'\s+\d+\s*%',                  # Percentage
+        r'/m2',                         # Surface area dosing
+        r'/kg',                         # Weight-based dosing
         r'\s+tablets?',                 # Tablet form
         r'\s+capsules?',                # Capsule form
         r'\s+injection',                # Injection form
+        r'\s+infusion',                 # Infusion form
         r'\s+solution',                 # Solution form
         r'\s+cream',                    # Topical form
         r'\s+gel',                      # Gel form
         r'\s+oral',                     # Route
-        r'\s+iv',                       # IV route
+        r'\s+iv\b',                     # IV route
         r'\s+extended[\s-]release',     # ER formulation
         r'\s+er\b',                     # ER abbreviation
         r'\s+xr\b',                     # XR abbreviation
@@ -179,7 +184,7 @@ class MedicationExtractor:
         variants_map = {}
         
         for original_value in str_values:
-            if not original_value or original_value.lower() in ['nan', 'none', 'n/a', 'null']:
+            if not original_value or original_value.lower() in ['nan', 'none', 'n/a', 'null', 'unknown', 'unk']:
                 continue
             
             # Extract individual medications from the value (handle combinations)
@@ -317,8 +322,8 @@ class MedicationExtractor:
         
         # Check for common non-medication values
         non_meds = ['yes', 'no', 'true', 'false', 'unknown', 'n/a', 'none', 
-                    'na', 'null', 'not applicable', 'test', 'sample']
-        if text.lower() in non_meds:
+                    'na', 'null', 'not applicable', 'test', 'sample', 'unk']
+        if text.lower().strip() in non_meds:
             return False
         
         # Check for medication-like patterns

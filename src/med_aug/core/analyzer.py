@@ -198,6 +198,9 @@ class DataAnalyzer:
         strong_indicators = ['agent', 'medication', 'drug', 'drugdtxt', 'conmed', 'concomitant']
         if any(indicator in name_lower.split() for indicator in strong_indicators):
             score = 1.0
+        # Check if 'drug' is part of a compound word (like chemo_drug)
+        elif 'drug' in name_lower:
+            score = 1.0
         # Partial matches for medication keywords
         elif any(keyword in name_lower for keyword in self.MEDICATION_KEYWORDS):
             score = 0.7
