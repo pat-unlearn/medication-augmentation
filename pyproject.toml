@@ -1,0 +1,55 @@
+[project]
+name = "medication-augmentation"
+version = "1.0.0"
+description = "Intelligent medication discovery and classification system for clinical research"
+readme = "README.md"
+authors = [
+    { name = "Patrick Sheehan", email = "pat@unlearn.ai" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    # CLI Framework
+    "typer[all]>=0.9.0",
+    "rich>=13.7.0",
+    
+    # Data Processing
+    "pandas>=2.0.0",
+    "polars>=0.20.0",
+    "pydantic>=2.5.0",
+    
+    # Web Scraping & HTTP
+    "httpx>=0.25.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=4.9.0",
+    
+    # LLM Integration
+    "openai>=1.0.0",
+    "anthropic>=0.18.0",
+    
+    # Caching & Storage
+    "diskcache>=5.6.0",
+    
+    # Configuration & Utilities
+    "pyyaml>=6.0.0",
+    "python-dotenv>=1.0.0",
+    "structlog>=23.2.0",
+    "aiofiles>=23.2.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-mock>=3.12.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "mypy>=1.7.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+med-aug = "med_aug.cli.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
