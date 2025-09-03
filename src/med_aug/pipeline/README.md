@@ -4,6 +4,141 @@
 
 The pipeline module orchestrates medication augmentation processes for any disease indication to expand conmeds.yml files. It provides robust, disease-agnostic execution management with checkpointing, recovery, and progress tracking, focusing on generating production-ready YAML configuration files with comprehensive drug name coverage across therapeutic areas.
 
+## Pipeline Architecture
+
+### High-Level Flow
+```
+Clinical Data → Analysis → Extraction → Research → Classification → Evaluation → Augmented conmeds.yml
+```
+
+### Detailed Pipeline Flow
+
+```mermaid
+%%{init: {
+  'theme': 'dark',
+  'themeVariables': {
+    'darkMode': true,
+    'background': '#0d1117',
+    'primaryColor': '#58a6ff',
+    'primaryTextColor': '#f0f6fc',
+    'primaryBorderColor': '#30363d',
+    'lineColor': '#58a6ff',
+    'secondaryColor': '#21262d',
+    'tertiaryColor': '#30363d',
+    'clusterBkg': '#161b22',
+    'clusterBorder': '#30363d',
+    'edgeLabelBackground': '#21262d'
+  },
+  'flowchart': {
+    'nodeSpacing': 50,
+    'rankSpacing': 60,
+    'curve': 'basis'
+  }
+}}%%
+flowchart TD
+    %% Input and Start
+    A["📊 Clinical Dataset<br/><small>CSV/Excel/Parquet</small>"] 
+    
+    %% Phase 1: Data Ingestion
+    A -->|"Load Data"| B["🔄 Data Ingestion Phase"]
+    B -->|"Validate"| B1{File Valid?}
+    B1 -->|"✅ Valid"| C["🔍 Column Analysis Phase"]
+    B1 -->|"❌ Invalid"| ERROR1["💥 Error: Invalid File"]
+    
+    %% Phase 2: Column Analysis  
+    C -->|"Analyze"| C1["🎯 Find Medication Columns"]
+    C1 -->|"Check Results"| C2{Medication Data<br/>Found?}
+    C2 -->|"✅ Found"| D["💊 Medication Extraction Phase"]
+    C2 -->|"❌ None Found"| ERROR2["💥 Error: No Medication Data"]
+    
+    %% Phase 3: Medication Extraction
+    D -->|"Extract Names"| D1["🧹 Clean & Normalize<br/>Medication Names"]
+    D1 -->|"Process"| D2["📋 Deduplicate Results"]
+    
+    %% Optional: Web Research
+    D2 -->|"Check Config"| E{Web Research<br/>Enabled?}
+    E -->|"✅ Yes"| F["🌐 Web Research Phase"]
+    E -->|"❌ No"| G["🤖 LLM Classification Phase"]
+    
+    F -->|"Search"| F1["📚 FDA Database"]
+    F -->|"Search"| F2["🏥 Clinical Guidelines"] 
+    F -->|"Search"| F3["💊 Drug Databases"]
+    F1 & F2 & F3 -->|"Merge Results"| G
+    
+    %% Phase 4: LLM Classification
+    G -->|"Load References"| G1["📋 Load conmeds_defaults.yml<br/>& Disease Module"]
+    G1 -->|"Classify"| G2["🧠 Claude LLM Classification<br/>vs Ground Truth"]
+    G2 -->|"Check Config"| G3{Evaluation<br/>Enabled?}
+    
+    %% Phase 5: Evaluation (Optional but Recommended)
+    G3 -->|"✅ Yes"| H["📊 Evaluation Phase"]
+    G3 -->|"❌ No"| K["📤 Output Generation Phase"]
+    
+    H -->|"Compare"| H1["🔍 Compare vs Ground Truth"]
+    H1 -->|"Analyze"| H2["⚠️ Identify False Positives<br/>& False Negatives"]
+    H2 -->|"Validate"| H3["🤖 LLM Validation of<br/>New Discoveries"]
+    H3 -->|"Report"| H4["📈 Generate Quality Metrics<br/>& Recommendations"]
+    H4 -->|"Continue"| K
+    
+    %% Phase 6: Output Generation
+    K -->|"Generate"| K1["📄 Create conmeds_augmented.yml"]
+    K1 -->|"Export"| K2["📊 Export Classification Results"]
+    K2 -->|"Create"| K3["📋 Generate Evaluation Reports"]
+    K3 -->|"Complete"| L["✅ Pipeline Complete"]
+    
+    %% Input Sources
+    subgraph INPUTS ["📥 Input Sources"]
+        direction TB
+        IN1["📄 conmeds_defaults.yml<br/><small>Existing Ground Truth</small>"]
+        IN2["⚙️ Disease Module<br/><small>Drug Class Definitions</small>"]
+        IN3["📊 Clinical Dataset<br/><small>Raw Medication Records</small>"]
+    end
+    
+    %% Output Deliverables
+    subgraph OUTPUTS ["📤 Generated Outputs"]
+        direction TB
+        OUT1["🎯 conmeds_augmented.yml<br/><small><b>PRIMARY DELIVERABLE</b></small>"]
+        OUT2["📊 evaluation_report.json<br/><small>Quality Metrics & Insights</small>"]
+        OUT3["📋 classification_results.csv<br/><small>Detailed Results</small>"]
+        OUT4["⏱️ pipeline_summary.json<br/><small>Execution Summary</small>"]
+    end
+    
+    %% Connect inputs and outputs with dotted lines
+    IN1 -.->|"Reference"| G1
+    IN2 -.->|"Load"| G1
+    IN3 -.->|"Process"| A
+    
+    K1 -.->|"Generate"| OUT1
+    H4 -.->|"Create"| OUT2
+    K2 -.->|"Export"| OUT3
+    K3 -.->|"Summary"| OUT4
+    
+    %% Styling for dark mode compatibility
+    classDef inputNode fill:#0969da,stroke:#1f6feb,stroke-width:2px,color:#ffffff
+    classDef processNode fill:#238636,stroke:#2ea043,stroke-width:2px,color:#ffffff
+    classDef decisionNode fill:#9a6700,stroke:#bf8700,stroke-width:2px,color:#ffffff
+    classDef errorNode fill:#da3633,stroke:#f85149,stroke-width:2px,color:#ffffff
+    classDef evaluationNode fill:#6f42c1,stroke:#8b5cf6,stroke-width:2px,color:#ffffff
+    classDef outputNode fill:#0969da,stroke:#1f6feb,stroke-width:3px,color:#ffffff
+    classDef primaryOutput fill:#238636,stroke:#2ea043,stroke-width:4px,color:#ffffff
+    
+    %% Apply styles
+    class A,IN1,IN2,IN3 inputNode
+    class B,C,D,F,G,K processNode
+    class C1,D1,D2,F1,F2,F3,G1,G2,K1,K2,K3,L processNode
+    class B1,C2,E,G3 decisionNode
+    class ERROR1,ERROR2 errorNode
+    class H,H1,H2,H3,H4 evaluationNode
+    class OUT2,OUT3,OUT4 outputNode
+    class OUT1 primaryOutput
+```
+
+### Key Pipeline Features
+- **Checkpointing**: Resume from any phase if interrupted
+- **Disease-Agnostic**: Same pipeline works for NSCLC, breast cancer, etc.
+- **Quality Assurance**: LLM-assisted evaluation prevents false positives
+- **Incremental Enhancement**: Builds on existing conmeds rather than replacing
+
 ## Structure
 
 ```

@@ -237,6 +237,16 @@ python -m src.med_aug.cli.app pipeline run \
   --resume-from llm_classification
 ```
 
+## Complete Workflow Example
+
+📋 **See [WORKFLOW_EXAMPLE.md](WORKFLOW_EXAMPLE.md) for a detailed end-to-end example** showing how the system processes real clinical data to augment conmeds.yml files with comprehensive medication coverage.
+
+The example demonstrates:
+- Processing clinical trial data with mixed medication nomenclature
+- LLM-assisted classification and evaluation
+- Quality assurance preventing false positives
+- Generation of augmented conmeds.yml with new medication names
+
 ## Integration
 
 The generated `conmeds_augmented.yml` file can be directly integrated into existing clinical pipelines for any disease:
