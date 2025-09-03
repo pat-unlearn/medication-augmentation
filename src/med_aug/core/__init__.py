@@ -16,18 +16,18 @@ from .extractor import MedicationExtractor, ExtractionResult
 
 __all__ = [
     # Models
-    'MedicationType',
-    'ConfidenceLevel', 
-    'Medication',
-    'DrugClass',
-    'ColumnAnalysisResult',
-    'AugmentationResult',
-    'MedicationClassification',
-    'WebResearchResult',
-    'PipelineState',
+    "MedicationType",
+    "ConfidenceLevel",
+    "Medication",
+    "DrugClass",
+    "ColumnAnalysisResult",
+    "AugmentationResult",
+    "MedicationClassification",
+    "WebResearchResult",
+    "PipelineState",
     # Analyzer
-    'DataAnalyzer',
+    "DataAnalyzer",
     # Extractor
-    'MedicationExtractor',
-    'ExtractionResult',
+    "MedicationExtractor",
+    "ExtractionResult",
 ]

@@ -288,7 +288,7 @@ Comprehensive test coverage for:
 The core module integrates with:
 - **Pipeline**: Provides analysis and extraction phases
 - **LLM**: Supplies candidates for classification
-- **Output**: Generates metrics and reports
+- **Output**: Exports classifications to conmeds.yml
 - **Web**: Provides medications for research
 
 ## Future Enhancements Ideas

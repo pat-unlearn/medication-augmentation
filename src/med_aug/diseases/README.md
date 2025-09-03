@@ -2,17 +2,17 @@
 
 ## Overview
 
-The diseases module provides a flexible, plugin-based architecture for disease-specific medication validation and classification. It supports multiple disease types with configurable drug classes, validation rules, and metadata management.
+The diseases module provides a flexible, plugin-based architecture for disease-specific medication validation and classification. Currently focused on NSCLC (Non-Small Cell Lung Cancer) with comprehensive drug class definitions, the module supports extensible validation rules and metadata management for future disease types.
 
 ## Structure
 
 ```
 diseases/
-├── __init__.py
+├── __init__.py        # Disease registry and public interface
 ├── base.py            # Base disease module interface
-├── registry.py        # Disease module registry and discovery
-├── nsclc.py           # NSCLC (Non-Small Cell Lung Cancer) module
-└── drug_classes.yaml  # Drug class configurations
+└── nsclc/             # NSCLC module directory
+    ├── __init__.py
+    └── module.py      # NSCLC drug classes and validation
 ```
 
 ## Key Components

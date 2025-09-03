@@ -13,15 +13,14 @@ cli/
 └── commands/           # Command groups
     ├── __init__.py
     ├── diseases.py     # Disease module commands
-    ├── pipeline.py     # Pipeline execution commands
-    └── reports.py      # Report generation commands
+    └── pipeline.py     # Pipeline execution commands
 ```
 
 ## Main Application (`app.py`)
 
 The main CLI application that:
 - Configures the Typer app with Rich formatting
-- Registers command groups (diseases, pipeline, reports)
+- Registers command groups (diseases, pipeline)
 - Sets up logging configuration
 - Provides global options (--debug, --config, --quiet)
 - Displays welcome banner and help text
@@ -45,13 +44,6 @@ Execute and manage the augmentation pipeline:
 - `analyze <file>` - Analyze a file to identify medication columns
 - `extract <file> <column>` - Extract medications from a specific column
 
-### Reports Commands (`commands/reports.py`)
-Generate reports and visualizations:
-- `generate <file>` - Generate comprehensive reports
-- `metrics <file>` - Calculate quality metrics
-- `export <file> <output>` - Export data to various formats
-- `visualize <file>` - Create data visualizations
-
 ## Usage Examples
 
 ```bash
@@ -73,11 +65,6 @@ med-aug diseases keywords nsclc
 med-aug pipeline run data.csv --disease nsclc --llm
 med-aug pipeline status abc123
 med-aug pipeline analyze data.csv
-
-# Report generation
-med-aug reports generate results.json --format html excel
-med-aug reports metrics results.json
-med-aug reports visualize data.json --type dashboard
 ```
 
 ## Key Features

@@ -9,30 +9,30 @@ import json
 @dataclass
 class PromptTemplate:
     """Template for generating prompts."""
-    
+
     name: str
     system: str
     user_template: str
     output_format: Optional[str] = None
     examples: List[Dict[str, Any]] = None
-    
+
     def format(self, **kwargs) -> tuple[str, str]:
         """
         Format the prompt with given parameters.
-        
+
         Args:
             **kwargs: Parameters for template substitution
-            
+
         Returns:
             Tuple of (system_message, user_prompt)
         """
         # Format user prompt
         user_prompt = Template(self.user_template).safe_substitute(**kwargs)
-        
+
         # Add output format if specified
         if self.output_format:
             user_prompt += f"\n\nOutput Format:\n{self.output_format}"
-        
+
         # Add examples if provided
         if self.examples:
             examples_text = "\n\nExamples:\n"
@@ -40,23 +40,23 @@ class PromptTemplate:
                 examples_text += f"Input: {example['input']}\n"
                 examples_text += f"Output: {example['output']}\n\n"
             user_prompt += examples_text
-        
+
         return self.system, user_prompt
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
-            'name': self.name,
-            'system': self.system,
-            'user_template': self.user_template,
-            'output_format': self.output_format,
-            'examples': self.examples
+            "name": self.name,
+            "system": self.system,
+            "user_template": self.user_template,
+            "output_format": self.output_format,
+            "examples": self.examples,
         }
 
 
 class MedicationPrompts:
     """Collection of medication-related prompt templates."""
-    
+
     @staticmethod
     def classification_prompt() -> PromptTemplate:
         """Prompt for classifying medications."""
@@ -90,19 +90,25 @@ class MedicationPrompts:
             examples=[
                 {
                     "input": "pembrolizumab for NSCLC",
-                    "output": json.dumps({
-                        "medication": "pembrolizumab",
-                        "classification": "immunotherapy",
-                        "alternative_classifications": ["PD-1 inhibitor", "checkpoint inhibitor"],
-                        "confidence": 1.0,
-                        "reasoning": "Pembrolizumab is a monoclonal antibody that blocks PD-1",
-                        "mechanism_of_action": "PD-1 receptor blockade",
-                        "therapeutic_use": "Non-small cell lung cancer treatment"
-                    }, indent=2)
+                    "output": json.dumps(
+                        {
+                            "medication": "pembrolizumab",
+                            "classification": "immunotherapy",
+                            "alternative_classifications": [
+                                "PD-1 inhibitor",
+                                "checkpoint inhibitor",
+                            ],
+                            "confidence": 1.0,
+                            "reasoning": "Pembrolizumab is a monoclonal antibody that blocks PD-1",
+                            "mechanism_of_action": "PD-1 receptor blockade",
+                            "therapeutic_use": "Non-small cell lung cancer treatment",
+                        },
+                        indent=2,
+                    ),
                 }
-            ]
+            ],
         )
-    
+
     @staticmethod
     def validation_prompt() -> PromptTemplate:
         """Prompt for validating medication names."""
@@ -133,9 +139,9 @@ class MedicationPrompts:
                 '  "brand_names": ["list of brand names"],\n'
                 '  "confidence": 0.0-1.0\n'
                 "}"
-            )
+            ),
         )
-    
+
     @staticmethod
     def augmentation_prompt() -> PromptTemplate:
         """Prompt for augmenting medication information."""
@@ -168,9 +174,9 @@ class MedicationPrompts:
                 '  "monitoring": {...},\n'
                 '  "clinical_pearls": [...]\n'
                 "}"
-            )
+            ),
         )
-    
+
     @staticmethod
     def extraction_enhancement_prompt() -> PromptTemplate:
         """Prompt for enhancing medication extraction."""
@@ -202,9 +208,9 @@ class MedicationPrompts:
                 '    "confidence": 0.0-1.0\n'
                 "  }\n"
                 "]"
-            )
+            ),
         )
-    
+
     @staticmethod
     def batch_classification_prompt() -> PromptTemplate:
         """Prompt for classifying multiple medications at once."""
@@ -226,17 +232,17 @@ class MedicationPrompts:
                 '  "classifications": {\n'
                 '    "drug_class_1": ["med1", "med2"],\n'
                 '    "drug_class_2": ["med3"]\n'
-                '  },\n'
+                "  },\n"
                 '  "unclassified": ["unknown_med"],\n'
                 '  "summary": {\n'
                 '    "total": 10,\n'
                 '    "classified": 8,\n'
                 '    "confidence": 0.85\n'
-                '  }\n'
+                "  }\n"
                 "}"
-            )
+            ),
         )
-    
+
     @staticmethod
     def context_aware_prompt() -> PromptTemplate:
         """Prompt that uses additional context for classification."""
@@ -266,56 +272,54 @@ class MedicationPrompts:
                 '  "context_notes": "relevant considerations",\n'
                 '  "confidence": 0.0-1.0\n'
                 "}"
-            )
+            ),
         )
 
 
 class PromptManager:
     """Manager for prompt templates."""
-    
+
     def __init__(self):
         """Initialize prompt manager."""
         self.templates: Dict[str, PromptTemplate] = {}
         self._load_default_templates()
-    
+
     def _load_default_templates(self):
         """Load default medication prompts."""
-        self.templates['classification'] = MedicationPrompts.classification_prompt()
-        self.templates['validation'] = MedicationPrompts.validation_prompt()
-        self.templates['augmentation'] = MedicationPrompts.augmentation_prompt()
-        self.templates['extraction'] = MedicationPrompts.extraction_enhancement_prompt()
-        self.templates['batch_classification'] = MedicationPrompts.batch_classification_prompt()
-        self.templates['context_aware'] = MedicationPrompts.context_aware_prompt()
-    
+        self.templates["classification"] = MedicationPrompts.classification_prompt()
+        self.templates["validation"] = MedicationPrompts.validation_prompt()
+        self.templates["augmentation"] = MedicationPrompts.augmentation_prompt()
+        self.templates["extraction"] = MedicationPrompts.extraction_enhancement_prompt()
+        self.templates["batch_classification"] = (
+            MedicationPrompts.batch_classification_prompt()
+        )
+        self.templates["context_aware"] = MedicationPrompts.context_aware_prompt()
+
     def get_template(self, name: str) -> Optional[PromptTemplate]:
         """Get a prompt template by name."""
         return self.templates.get(name)
-    
+
     def add_template(self, template: PromptTemplate):
         """Add a custom prompt template."""
         self.templates[template.name] = template
-    
+
     def list_templates(self) -> List[str]:
         """List available template names."""
         return list(self.templates.keys())
-    
-    def format_prompt(
-        self,
-        template_name: str,
-        **kwargs
-    ) -> tuple[str, str]:
+
+    def format_prompt(self, template_name: str, **kwargs) -> tuple[str, str]:
         """
         Format a prompt using a template.
-        
+
         Args:
             template_name: Name of template to use
             **kwargs: Parameters for template
-            
+
         Returns:
             Tuple of (system_message, user_prompt)
         """
         template = self.get_template(template_name)
         if not template:
             raise ValueError(f"Template not found: {template_name}")
-        
+
         return template.format(**kwargs)

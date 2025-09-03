@@ -6,17 +6,17 @@ from ..base import DiseaseModule, DrugClassConfig
 
 class NSCLCModule(DiseaseModule):
     """Non-Small Cell Lung Cancer disease module implementation."""
-    
+
     @property
     def name(self) -> str:
         """Disease identifier."""
         return "nsclc"
-    
+
     @property
     def display_name(self) -> str:
         """Human-readable disease name."""
         return "Non-Small Cell Lung Cancer"
-    
+
     @property
     def drug_classes(self) -> List[DrugClassConfig]:
         """NSCLC-specific drug class configurations."""
@@ -25,127 +25,235 @@ class NSCLCModule(DiseaseModule):
             DrugClassConfig(
                 name="chemotherapy",
                 keywords=[
-                    "carboplatin", "paclitaxel", "pemetrexed", "docetaxel", 
-                    "gemcitabine", "cisplatin", "etoposide", "vinorelbine",
-                    "irinotecan", "topotecan", "vincristine", "abraxane",
-                    "taxol", "paraplatin", "alimta", "taxotere", "gemzar"
+                    "carboplatin",
+                    "paclitaxel",
+                    "pemetrexed",
+                    "docetaxel",
+                    "gemcitabine",
+                    "cisplatin",
+                    "etoposide",
+                    "vinorelbine",
+                    "irinotecan",
+                    "topotecan",
+                    "vincristine",
+                    "abraxane",
+                    "taxol",
+                    "paraplatin",
+                    "alimta",
+                    "taxotere",
+                    "gemzar",
                 ],
                 confidence_threshold=0.8,
-                web_sources=["fda", "nccn", "clinicaltrials"]
+                web_sources=["fda", "nccn", "clinicaltrials"],
             ),
-            
             # Immunotherapy agents
             DrugClassConfig(
                 name="immunotherapy",
                 keywords=[
-                    "pembrolizumab", "nivolumab", "atezolizumab", "durvalumab",
-                    "ipilimumab", "cemiplimab", "keytruda", "opdivo", "tecentriq",
-                    "imfinzi", "yervoy", "libtayo", "opdualag", "medi4736",
-                    "tremelimumab", "tislelizumab", "sintilimab", "camrelizumab"
+                    "pembrolizumab",
+                    "nivolumab",
+                    "atezolizumab",
+                    "durvalumab",
+                    "ipilimumab",
+                    "cemiplimab",
+                    "keytruda",
+                    "opdivo",
+                    "tecentriq",
+                    "imfinzi",
+                    "yervoy",
+                    "libtayo",
+                    "opdualag",
+                    "medi4736",
+                    "tremelimumab",
+                    "tislelizumab",
+                    "sintilimab",
+                    "camrelizumab",
                 ],
                 confidence_threshold=0.85,
-                web_sources=["fda", "nccn", "oncokb"]
+                web_sources=["fda", "nccn", "oncokb"],
             ),
-            
             # Targeted therapy agents
             DrugClassConfig(
                 name="targeted_therapy",
                 keywords=[
-                    "osimertinib", "erlotinib", "afatinib", "gefitinib", "dacomitinib",
-                    "crizotinib", "alectinib", "brigatinib", "ceritinib", "lorlatinib",
-                    "entrectinib", "larotrectinib", "sotorasib", "adagrasib", "amivantamab",
-                    "mobocertinib", "capmatinib", "tepotinib", "savolitinib", "pralsetinib",
-                    "selpercatinib", "tagrisso", "tarceva", "gilotrif", "iressa", "vizimpro",
-                    "xalkori", "alecensa", "alunbrig", "zykadia", "lorbrena", "rozlytrek",
-                    "vitrakvi", "lumakras", "krazati", "rybrevant", "exkivity", "tabrecta",
-                    "tepmetko", "gavreto", "retevmo"
+                    "osimertinib",
+                    "erlotinib",
+                    "afatinib",
+                    "gefitinib",
+                    "dacomitinib",
+                    "crizotinib",
+                    "alectinib",
+                    "brigatinib",
+                    "ceritinib",
+                    "lorlatinib",
+                    "entrectinib",
+                    "larotrectinib",
+                    "sotorasib",
+                    "adagrasib",
+                    "amivantamab",
+                    "mobocertinib",
+                    "capmatinib",
+                    "tepotinib",
+                    "savolitinib",
+                    "pralsetinib",
+                    "selpercatinib",
+                    "tagrisso",
+                    "tarceva",
+                    "gilotrif",
+                    "iressa",
+                    "vizimpro",
+                    "xalkori",
+                    "alecensa",
+                    "alunbrig",
+                    "zykadia",
+                    "lorbrena",
+                    "rozlytrek",
+                    "vitrakvi",
+                    "lumakras",
+                    "krazati",
+                    "rybrevant",
+                    "exkivity",
+                    "tabrecta",
+                    "tepmetko",
+                    "gavreto",
+                    "retevmo",
                 ],
                 confidence_threshold=0.9,
-                web_sources=["fda", "oncokb", "clinicaltrials"]
+                web_sources=["fda", "oncokb", "clinicaltrials"],
             ),
-            
             # Anti-angiogenic agents
             DrugClassConfig(
                 name="anti_angiogenic",
                 keywords=[
-                    "bevacizumab", "ramucirumab", "avastin", "cyramza",
-                    "nintedanib", "ofev", "vargatef", "regorafenib",
-                    "stivarga", "axitinib", "inlyta", "sunitinib", "sutent"
+                    "bevacizumab",
+                    "ramucirumab",
+                    "avastin",
+                    "cyramza",
+                    "nintedanib",
+                    "ofev",
+                    "vargatef",
+                    "regorafenib",
+                    "stivarga",
+                    "axitinib",
+                    "inlyta",
+                    "sunitinib",
+                    "sutent",
                 ],
                 confidence_threshold=0.85,
-                web_sources=["fda", "nccn"]
+                web_sources=["fda", "nccn"],
             ),
-            
             # Antibody-drug conjugates
             DrugClassConfig(
                 name="antibody_drug_conjugates",
                 keywords=[
-                    "trastuzumab deruxtecan", "enhertu", "sacituzumab govitecan",
-                    "trodelvy", "datopotamab deruxtecan", "dato-dxd", "patritumab deruxtecan"
+                    "trastuzumab deruxtecan",
+                    "enhertu",
+                    "sacituzumab govitecan",
+                    "trodelvy",
+                    "datopotamab deruxtecan",
+                    "dato-dxd",
+                    "patritumab deruxtecan",
                 ],
                 confidence_threshold=0.9,
-                web_sources=["fda", "oncokb", "clinicaltrials"]
+                web_sources=["fda", "oncokb", "clinicaltrials"],
             ),
-            
             # KRAS inhibitors (new class)
             DrugClassConfig(
                 name="kras_inhibitors",
                 keywords=[
-                    "sotorasib", "adagrasib", "lumakras", "krazati",
-                    "mrtx849", "gdc-6036", "bi-1823911", "jdq443"
+                    "sotorasib",
+                    "adagrasib",
+                    "lumakras",
+                    "krazati",
+                    "mrtx849",
+                    "gdc-6036",
+                    "bi-1823911",
+                    "jdq443",
                 ],
                 confidence_threshold=0.9,
-                web_sources=["fda", "oncokb", "clinicaltrials"]
+                web_sources=["fda", "oncokb", "clinicaltrials"],
             ),
-            
             # EGFR inhibitors (specific subclass)
             DrugClassConfig(
                 name="egfr_inhibitors",
                 keywords=[
-                    "osimertinib", "erlotinib", "afatinib", "gefitinib", "dacomitinib",
-                    "mobocertinib", "lazertinib", "tagrisso", "tarceva", "gilotrif",
-                    "iressa", "vizimpro", "exkivity", "leclaza", "amivantamab", "rybrevant"
+                    "osimertinib",
+                    "erlotinib",
+                    "afatinib",
+                    "gefitinib",
+                    "dacomitinib",
+                    "mobocertinib",
+                    "lazertinib",
+                    "tagrisso",
+                    "tarceva",
+                    "gilotrif",
+                    "iressa",
+                    "vizimpro",
+                    "exkivity",
+                    "leclaza",
+                    "amivantamab",
+                    "rybrevant",
                 ],
                 confidence_threshold=0.9,
-                web_sources=["fda", "oncokb"]
+                web_sources=["fda", "oncokb"],
             ),
-            
             # ALK inhibitors (specific subclass)
             DrugClassConfig(
                 name="alk_inhibitors",
                 keywords=[
-                    "crizotinib", "alectinib", "brigatinib", "ceritinib", "lorlatinib",
-                    "ensartinib", "xalkori", "alecensa", "alunbrig", "zykadia", "lorbrena"
+                    "crizotinib",
+                    "alectinib",
+                    "brigatinib",
+                    "ceritinib",
+                    "lorlatinib",
+                    "ensartinib",
+                    "xalkori",
+                    "alecensa",
+                    "alunbrig",
+                    "zykadia",
+                    "lorbrena",
                 ],
                 confidence_threshold=0.9,
-                web_sources=["fda", "oncokb"]
+                web_sources=["fda", "oncokb"],
             ),
-            
             # ROS1 inhibitors
             DrugClassConfig(
                 name="ros1_inhibitors",
                 keywords=[
-                    "crizotinib", "entrectinib", "ceritinib", "lorlatinib",
-                    "repotrectinib", "taletrectinib", "xalkori", "rozlytrek",
-                    "zykadia", "lorbrena"
+                    "crizotinib",
+                    "entrectinib",
+                    "ceritinib",
+                    "lorlatinib",
+                    "repotrectinib",
+                    "taletrectinib",
+                    "xalkori",
+                    "rozlytrek",
+                    "zykadia",
+                    "lorbrena",
                 ],
                 confidence_threshold=0.9,
-                web_sources=["fda", "oncokb"]
+                web_sources=["fda", "oncokb"],
             ),
-            
             # MET inhibitors
             DrugClassConfig(
                 name="met_inhibitors",
                 keywords=[
-                    "capmatinib", "tepotinib", "savolitinib", "crizotinib",
-                    "tabrecta", "tepmetko", "xalkori", "elzovantinib",
-                    "bozitinib", "amg-337"
+                    "capmatinib",
+                    "tepotinib",
+                    "savolitinib",
+                    "crizotinib",
+                    "tabrecta",
+                    "tepmetko",
+                    "xalkori",
+                    "elzovantinib",
+                    "bozitinib",
+                    "amg-337",
                 ],
                 confidence_threshold=0.9,
-                web_sources=["fda", "oncokb", "clinicaltrials"]
-            )
+                web_sources=["fda", "oncokb", "clinicaltrials"],
+            ),
         ]
-    
+
     def get_web_sources(self) -> List[str]:
         """NSCLC-specific data sources for web scraping."""
         return [
@@ -157,7 +265,7 @@ class NSCLCModule(DiseaseModule):
             "https://www.esmo.org/guidelines/guidelines-by-topic/lung-and-chest-tumours/clinical-practice-living-guidelines-metastatic-non-small-cell-lung-cancer",
             "https://www.lungcancerresearchfoundation.org/research/treatments-clinical-trials/",
         ]
-    
+
     def get_llm_context(self) -> str:
         """NSCLC-specific context for LLM classification."""
         return """You are a clinical oncologist specializing in Non-Small Cell Lung Cancer (NSCLC) treatment.
@@ -209,90 +317,187 @@ Classify medications into these categories:
 
 Consider generic names, brand names, trial designations, and common abbreviations.
 Many drugs may belong to multiple categories (e.g., Crizotinib is both ALK and ROS1 inhibitor)."""
-    
+
     def validate_medication(self, medication: str, drug_class: str) -> bool:
         """
         NSCLC-specific medication validation.
-        
+
         Args:
             medication: Medication name to validate
             drug_class: Drug class to validate against
-            
+
         Returns:
             True if medication is valid for the drug class
         """
         medication_lower = medication.lower().strip()
-        
+
         # Known NSCLC medications by class (comprehensive list)
         known_nsclc_meds = {
             "chemotherapy": [
-                "carboplatin", "paclitaxel", "pemetrexed", "docetaxel", "gemcitabine",
-                "cisplatin", "etoposide", "vinorelbine", "irinotecan", "topotecan",
-                "abraxane", "taxol", "paraplatin", "alimta", "taxotere", "gemzar"
+                "carboplatin",
+                "paclitaxel",
+                "pemetrexed",
+                "docetaxel",
+                "gemcitabine",
+                "cisplatin",
+                "etoposide",
+                "vinorelbine",
+                "irinotecan",
+                "topotecan",
+                "abraxane",
+                "taxol",
+                "paraplatin",
+                "alimta",
+                "taxotere",
+                "gemzar",
             ],
             "immunotherapy": [
-                "pembrolizumab", "keytruda", "nivolumab", "opdivo", "atezolizumab",
-                "tecentriq", "durvalumab", "imfinzi", "ipilimumab", "yervoy",
-                "cemiplimab", "libtayo", "tremelimumab", "tislelizumab", "sintilimab"
+                "pembrolizumab",
+                "keytruda",
+                "nivolumab",
+                "opdivo",
+                "atezolizumab",
+                "tecentriq",
+                "durvalumab",
+                "imfinzi",
+                "ipilimumab",
+                "yervoy",
+                "cemiplimab",
+                "libtayo",
+                "tremelimumab",
+                "tislelizumab",
+                "sintilimab",
             ],
             "targeted_therapy": [
-                "osimertinib", "tagrisso", "erlotinib", "tarceva", "afatinib", "gilotrif",
-                "gefitinib", "iressa", "dacomitinib", "vizimpro", "crizotinib", "xalkori",
-                "alectinib", "alecensa", "brigatinib", "alunbrig", "ceritinib", "zykadia",
-                "lorlatinib", "lorbrena", "entrectinib", "rozlytrek", "larotrectinib",
-                "vitrakvi", "sotorasib", "lumakras", "adagrasib", "krazati",
-                "amivantamab", "rybrevant", "mobocertinib", "exkivity",
-                "capmatinib", "tabrecta", "tepotinib", "tepmetko",
-                "selpercatinib", "retevmo", "pralsetinib", "gavreto"
+                "osimertinib",
+                "tagrisso",
+                "erlotinib",
+                "tarceva",
+                "afatinib",
+                "gilotrif",
+                "gefitinib",
+                "iressa",
+                "dacomitinib",
+                "vizimpro",
+                "crizotinib",
+                "xalkori",
+                "alectinib",
+                "alecensa",
+                "brigatinib",
+                "alunbrig",
+                "ceritinib",
+                "zykadia",
+                "lorlatinib",
+                "lorbrena",
+                "entrectinib",
+                "rozlytrek",
+                "larotrectinib",
+                "vitrakvi",
+                "sotorasib",
+                "lumakras",
+                "adagrasib",
+                "krazati",
+                "amivantamab",
+                "rybrevant",
+                "mobocertinib",
+                "exkivity",
+                "capmatinib",
+                "tabrecta",
+                "tepotinib",
+                "tepmetko",
+                "selpercatinib",
+                "retevmo",
+                "pralsetinib",
+                "gavreto",
             ],
             "egfr_inhibitors": [
-                "osimertinib", "tagrisso", "erlotinib", "tarceva", "afatinib", "gilotrif",
-                "gefitinib", "iressa", "dacomitinib", "vizimpro", "mobocertinib", "exkivity",
-                "amivantamab", "rybrevant", "lazertinib", "leclaza"
+                "osimertinib",
+                "tagrisso",
+                "erlotinib",
+                "tarceva",
+                "afatinib",
+                "gilotrif",
+                "gefitinib",
+                "iressa",
+                "dacomitinib",
+                "vizimpro",
+                "mobocertinib",
+                "exkivity",
+                "amivantamab",
+                "rybrevant",
+                "lazertinib",
+                "leclaza",
             ],
             "alk_inhibitors": [
-                "crizotinib", "xalkori", "alectinib", "alecensa", "brigatinib", "alunbrig",
-                "ceritinib", "zykadia", "lorlatinib", "lorbrena", "ensartinib"
+                "crizotinib",
+                "xalkori",
+                "alectinib",
+                "alecensa",
+                "brigatinib",
+                "alunbrig",
+                "ceritinib",
+                "zykadia",
+                "lorlatinib",
+                "lorbrena",
+                "ensartinib",
             ],
             "kras_inhibitors": [
-                "sotorasib", "lumakras", "adagrasib", "krazati", "mrtx849", "gdc-6036"
+                "sotorasib",
+                "lumakras",
+                "adagrasib",
+                "krazati",
+                "mrtx849",
+                "gdc-6036",
             ],
             "anti_angiogenic": [
-                "bevacizumab", "avastin", "ramucirumab", "cyramza", "nintedanib", "ofev"
+                "bevacizumab",
+                "avastin",
+                "ramucirumab",
+                "cyramza",
+                "nintedanib",
+                "ofev",
             ],
             "antibody_drug_conjugates": [
-                "trastuzumab deruxtecan", "enhertu", "sacituzumab govitecan", "trodelvy",
-                "datopotamab deruxtecan", "dato-dxd", "patritumab deruxtecan"
-            ]
+                "trastuzumab deruxtecan",
+                "enhertu",
+                "sacituzumab govitecan",
+                "trodelvy",
+                "datopotamab deruxtecan",
+                "dato-dxd",
+                "patritumab deruxtecan",
+            ],
         }
-        
+
         # Check if medication is known for this drug class
         if drug_class in known_nsclc_meds:
             for known_med in known_nsclc_meds[drug_class]:
                 if known_med in medication_lower or medication_lower in known_med:
                     return True
-        
+
         # Check against keywords in drug class config
         drug_class_config = self.get_drug_class_by_name(drug_class)
         if drug_class_config:
             for keyword in drug_class_config.keywords:
-                if keyword.lower() in medication_lower or medication_lower in keyword.lower():
+                if (
+                    keyword.lower() in medication_lower
+                    or medication_lower in keyword.lower()
+                ):
                     return True
-        
+
         # For unknown medications in unknown classes, be permissive to allow discovery
         # For known classes with unknown medications, return False to maintain accuracy
         if drug_class in known_nsclc_meds:
             return False
-        
+
         # For completely unknown drug classes, be permissive
         return True
-    
+
     def get_medication_notes(self, medication: str) -> str:
         """Get NSCLC-specific notes about a medication."""
         medication_lower = medication.lower()
-        
+
         notes = []
-        
+
         # Multi-target drugs
         if medication_lower in ["crizotinib", "xalkori"]:
             notes.append("Targets both ALK and ROS1 rearrangements")
@@ -300,7 +505,7 @@ Many drugs may belong to multiple categories (e.g., Crizotinib is both ALK and R
             notes.append("Active against both ALK and ROS1")
         elif medication_lower in ["entrectinib", "rozlytrek"]:
             notes.append("Targets ROS1, NTRK, and ALK")
-        
+
         # Resistance patterns
         if medication_lower in ["osimertinib", "tagrisso"]:
             notes.append("3rd generation EGFR-TKI, active against T790M resistance")
@@ -308,19 +513,19 @@ Many drugs may belong to multiple categories (e.g., Crizotinib is both ALK and R
             notes.append("3rd generation ALK inhibitor, crosses blood-brain barrier")
         elif medication_lower in ["alectinib", "alecensa"]:
             notes.append("Preferred 1st-line ALK inhibitor, excellent CNS penetration")
-        
+
         # Special populations
         if medication_lower in ["pemetrexed", "alimta"]:
             notes.append("Preferred for non-squamous histology")
         elif medication_lower in ["gemcitabine", "gemzar"]:
             notes.append("Preferred for squamous histology")
-        
+
         # Combination therapies
         if medication_lower in ["pembrolizumab", "keytruda"]:
             notes.append("Can be used as monotherapy (PD-L1 ≥50%) or with chemotherapy")
         elif medication_lower in ["bevacizumab", "avastin"]:
             notes.append("Usually combined with chemotherapy and/or immunotherapy")
-        
+
         return "; ".join(notes) if notes else ""
 
 

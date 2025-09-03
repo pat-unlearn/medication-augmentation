@@ -2,6 +2,7 @@
 
 import pytest
 import asyncio
+import subprocess
 from pathlib import Path
 import json
 
@@ -172,7 +173,7 @@ class TestClaudeCLIProvider:
     
     @pytest.mark.asyncio
     @pytest.mark.skipif(
-        not Path("/usr/local/bin/claude").exists() and not Path("/usr/bin/claude").exists(),
+        subprocess.run(["which", "claude"], capture_output=True).returncode != 0,
         reason="Claude CLI not installed"
     )
     async def test_cli_availability(self, provider):

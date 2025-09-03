@@ -2,7 +2,7 @@
 
 ## Overview
 
-The pipeline module orchestrates the entire medication augmentation process through a series of configurable phases. It provides robust execution management with checkpointing, recovery, parallel processing, and comprehensive progress tracking.
+The pipeline module orchestrates the NSCLC medication augmentation process to expand conmeds.yml files. It provides robust execution management with checkpointing, recovery, and progress tracking, focusing on generating production-ready YAML configuration files with comprehensive drug name coverage.
 
 ## Structure
 
@@ -11,8 +11,8 @@ pipeline/
 ├── __init__.py
 ├── orchestrator.py     # Main pipeline orchestrator
 ├── phases.py          # Individual pipeline phases
-├── config.py          # Pipeline configuration
-└── checkpoint.py      # Checkpoint and recovery system
+├── checkpoint.py      # Checkpoint and recovery system
+└── progress.py        # Progress tracking with Rich UI
 ```
 
 ## Key Components
@@ -128,48 +128,28 @@ phase = OutputGenerationPhase(config)
 result = await phase.execute(all_phase_results)
 
 # Result contains:
-# - Generated reports
-# - Quality metrics
-# - Visualizations
-# - Export files
+# - conmeds_augmented.yml (primary deliverable)
+# - classification_results.json
+# - pipeline_summary.json
+# - Export files in various formats
 ```
 
-### Pipeline Configuration (`config.py`)
+### Pipeline Configuration
 
-Comprehensive configuration management:
+Configuration is handled through the PipelineConfig dataclass in the orchestrator:
 
 ```python
 @dataclass
 class PipelineConfig:
-    # Input/Output
-    input_file: Path
-    output_dir: Path
-    
-    # Disease Module
+    input_file: str
+    output_path: str = "./output"
     disease_module: str = "nsclc"
-    
-    # Phase Control
-    enable_analysis: bool = True
-    enable_extraction: bool = True
+    enable_llm_classification: bool = False
+    llm_provider: str = "claude_cli"
+    enable_web_research: bool = True
     enable_validation: bool = True
-    enable_llm: bool = True
-    enable_web_research: bool = False
-    enable_output: bool = True
-    
-    # Processing
     batch_size: int = 100
     max_workers: int = 4
-    timeout: int = 300
-    
-    # Checkpointing
-    enable_checkpoint: bool = True
-    checkpoint_interval: int = 5
-    checkpoint_dir: Path = Path("./checkpoints")
-    
-    # Output Formats
-    output_formats: List[str] = ["html", "json"]
-    include_visualizations: bool = True
-    include_metrics: bool = True
 ```
 
 ### Checkpoint System (`checkpoint.py`)
