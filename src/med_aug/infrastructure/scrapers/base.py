@@ -13,7 +13,7 @@ import structlog
 
 from ..cache.base import BaseCache, CacheConfig
 from ..cache.memory_cache import MemoryCache
-from ..rate_limiter import DomainRateLimiter, RateLimitConfig
+from ..rate_limiter import DomainRateLimiter, RateLimitConfig, _domain_limiter
 
 logger = structlog.get_logger()
 
@@ -98,12 +98,14 @@ class BaseScraper(ABC):
 
         # Initialize rate limiter
         if rate_limiter is None:
-            rate_config = RateLimitConfig(
+            # Use the global domain rate limiter
+            self.rate_limiter = _domain_limiter
+            self.rate_config = RateLimitConfig(
                 requests_per_second=1.0 / config.rate_limit, burst_size=3
             )
-            self.rate_limiter = DomainRateLimiter(rate_config)
         else:
             self.rate_limiter = rate_limiter
+            self.rate_config = None
 
     async def __aenter__(self):
         """Async context manager entry."""
@@ -159,7 +161,7 @@ class BaseScraper(ABC):
                 return cached_response
 
         # Apply rate limiting
-        await self.rate_limiter.wait_and_acquire(domain)
+        await self.rate_limiter.acquire(domain, self.rate_config)
 
         for attempt in range(self.config.max_retries):
             try:

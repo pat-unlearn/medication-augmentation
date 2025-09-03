@@ -24,7 +24,7 @@ class TestLLMConfig:
         """Test default configuration values."""
         config = LLMConfig()
         
-        assert config.model == LLMModel.CLAUDE_3_HAIKU
+        assert config.model == LLMModel.CLAUDE_4_SONNET
         assert config.temperature == 0.0
         assert config.max_tokens == 4096
         assert config.timeout == 30
@@ -157,7 +157,7 @@ class TestClaudeCLIProvider:
     def provider(self):
         """Create Claude CLI provider."""
         config = LLMConfig(
-            model=LLMModel.CLAUDE_3_HAIKU,
+            model=LLMModel.CLAUDE_4_SONNET,
             temperature=0.0,
             max_tokens=100,
             timeout=10
@@ -168,7 +168,7 @@ class TestClaudeCLIProvider:
     async def test_provider_initialization(self, provider):
         """Test provider initialization."""
         assert provider.cli_command == "claude"
-        assert provider.config.model == LLMModel.CLAUDE_3_HAIKU
+        assert provider.config.model == LLMModel.CLAUDE_4_SONNET
         assert provider.config.temperature == 0.0
     
     @pytest.mark.asyncio

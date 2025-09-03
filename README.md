@@ -93,7 +93,7 @@ med-aug pipeline run data/clinical_data.csv \
   --disease nsclc \
   --output ./output
 
-# Augment for breast cancer (when module is available)  
+# Augment for breast cancer (when module is available)
 med-aug pipeline run data/breast_cancer_data.csv \
   --conmeds data/conmeds_defaults.yml \
   --disease breast_cancer \
@@ -133,13 +133,14 @@ The pipeline generates:
 ### Pipeline Configuration
 
 ```python
-from src.med_aug.pipeline import PipelineConfig
+from med_aug.pipeline import PipelineConfig
 
 config = PipelineConfig(
     input_file="data/clinical_data.csv",
+    conmeds_file="data/conmeds_defaults.yml",  # Existing conmeds to augment
     output_path="./output",
     disease_module="nsclc",  # Or "breast_cancer", "prostate_cancer", etc.
-    enable_llm_classification=True,  # Requires Claude CLI
+    enable_llm_classification=True,  # Default: True (core feature)
     llm_provider="claude_cli"
 )
 ```

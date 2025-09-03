@@ -37,34 +37,48 @@ Manage disease modules and configurations:
 
 ### Pipeline Commands (`commands/pipeline.py`)
 Execute and manage the augmentation pipeline:
-- `run <file>` - Run the full pipeline on a data file
+- `run <file>` - Run the full pipeline on a data file (LLM enabled by default)
 - `status <id>` - Check status of a pipeline run
 - `list` - List all pipeline checkpoints
 - `clean` - Clean old pipeline checkpoints
 - `analyze <file>` - Analyze a file to identify medication columns
 - `extract <file> <column>` - Extract medications from a specific column
 
+Key options for `run`:
+- `--conmeds PATH` - Existing conmeds.yml file to augment
+- `--disease NAME` - Disease module (nsclc, breast_cancer, etc.)
+- `--output PATH` - Output directory
+- `--no-llm` - Disable LLM classification (not recommended)
+- `--evaluate` - Enable comprehensive evaluation
+
 ## Usage Examples
 
 ```bash
+# Activate virtual environment
+source .venv/bin/activate
+
 # Basic usage
 med-aug --help
 
 # Enable debug logging
-med-aug --debug pipeline run data.csv
+med-aug --debug pipeline run data.csv --conmeds data/conmeds_defaults.yml
 
 # Run with custom config
-med-aug --config custom.yaml pipeline run data.csv
+med-aug --config custom.yaml pipeline run data.csv --conmeds data/conmeds_defaults.yml
 
 # Disease module management
 med-aug diseases list
 med-aug diseases info nsclc
 med-aug diseases keywords nsclc
 
-# Pipeline execution
-med-aug pipeline run data.csv --disease nsclc --llm
+# Pipeline execution (LLM enabled by default)
+med-aug pipeline run data.csv --conmeds data/conmeds_defaults.yml --disease nsclc
 med-aug pipeline status abc123
 med-aug pipeline analyze data.csv
+
+# Advanced usage
+med-aug pipeline run data.csv --conmeds data/conmeds_defaults.yml --disease nsclc --evaluate
+med-aug pipeline extract data.csv DRUGNAME --output results.json
 ```
 
 ## Key Features

@@ -23,7 +23,7 @@ core/
 Sophisticated column detection for identifying medication data:
 
 ```python
-from med_aug.core import DataAnalyzer
+from med_aug.core.analyzer import DataAnalyzer
 
 analyzer = DataAnalyzer()
 results = analyzer.analyze_dataframe(df, confidence_threshold=0.5)
@@ -46,7 +46,7 @@ for result in results:
 Advanced medication extraction and normalization:
 
 ```python
-from med_aug.core import MedicationExtractor
+from med_aug.core.extractor import MedicationExtractor
 
 extractor = MedicationExtractor()
 result = extractor.extract_from_series(df['medications'], 'medications')
@@ -197,7 +197,7 @@ best_column = results[0].column if results else None
 
 ### Extraction with Options
 ```python
-from med_aug.core import MedicationExtractor
+from med_aug.core.extractor import MedicationExtractor
 
 extractor = MedicationExtractor(
     normalize_case=True,

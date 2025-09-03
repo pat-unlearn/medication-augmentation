@@ -2,10 +2,9 @@
 
 import asyncio
 import uuid
-from typing import Dict, Any, List, Optional, Type
-from dataclasses import dataclass, field
+from typing import Dict, Any, List, Optional
+from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
 
 from .phases import (
     PipelinePhase,
@@ -117,6 +116,8 @@ class PipelineOrchestrator:
                 "confidence_threshold": config.confidence_threshold,
                 "enable_llm_classification": config.enable_llm_classification,
                 "llm_provider": config.llm_provider,
+                "conmeds_file": config.conmeds_file,  # Pass base conmeds file for augmentation
+                "progress_tracker": self.progress_tracker,  # Pass progress tracker to phases
             }
         )
 

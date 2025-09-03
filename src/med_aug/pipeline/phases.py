@@ -553,7 +553,7 @@ class LLMClassificationPhase(PipelinePhase):
         """Classify medications using LLM."""
         from ..llm.classifier import MedicationClassifier
         from ..llm.service import LLMService
-        from ..llm.providers import LLMConfig, ProviderFactory
+        from ..llm.providers import LLMConfig, LLMModel, ProviderFactory
 
         logger.info("llm_classification_started")
         perf_logger.start_operation("llm_classification")
@@ -579,9 +579,10 @@ class LLMClassificationPhase(PipelinePhase):
             # Initialize LLM service with appropriate provider
             provider_type = context.get("llm_provider", "claude_cli")
             config = LLMConfig(
+                model=LLMModel.CLAUDE_3_SONNET,  # Explicitly use sonnet
                 temperature=0.0,  # Use deterministic outputs
                 max_tokens=2048,
-                timeout=30,
+                timeout=120,
                 retry_attempts=2,
             )
 
@@ -609,9 +610,20 @@ class LLMClassificationPhase(PipelinePhase):
 
             logger.info(f"classifying_medications", count=len(meds_to_classify))
 
-            # Use batch classification for efficiency
+            # Create progress callback for live updates
+            def llm_progress_callback(current: int, total: int, message: str):
+                logger.info("llm_classification_progress", 
+                          current=current, total=total, message=message)
+                # Update progress tracker if available
+                if hasattr(context, 'progress_tracker') and context['progress_tracker']:
+                    progress_percent = (current / total) * 100 if total > 0 else 0
+                    context['progress_tracker'].update_phase_progress(
+                        "llm_classification", progress_percent, f"{message} ({current}/{total})"
+                    )
+            
+            # Use batch classification with progress tracking
             batch_result = await classifier.classify_batch(
-                meds_to_classify, batch_size=5
+                meds_to_classify, batch_size=5, progress_callback=llm_progress_callback
             )
 
             # Store results in context
@@ -761,6 +773,7 @@ class OutputGenerationPhase(PipelinePhase):
                     export_data,
                     conmeds_file,
                     title=f"NSCLC Medication Augmentation - {datetime.now().strftime('%Y-%m-%d')}",
+                    conmeds_file=context.get("conmeds_file"),  # Pass base conmeds for augmentation
                 )
                 artifacts.append(str(result_path))
 

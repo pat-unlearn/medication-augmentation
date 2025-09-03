@@ -161,12 +161,13 @@ from med_aug.pipeline import PipelineOrchestrator, PipelineConfig
 
 config = PipelineConfig(
     input_file="data.csv",
-    output_dir="./results",
+    conmeds_file="data/conmeds_defaults.yml",  # Existing conmeds to augment
+    output_path="./results",
     disease_module="nsclc",  # or "breast_cancer", "prostate_cancer", etc.
-    enable_llm=True,
+    enable_llm_classification=True,  # Default: True (core feature)
     enable_web_research=True,
-    batch_size=100,
-    checkpoint_interval=5
+    enable_checkpoints=True,
+    confidence_threshold=0.5
 )
 
 orchestrator = PipelineOrchestrator(config)
@@ -176,7 +177,6 @@ results = await orchestrator.run()
 
 # Resume from checkpoint
 results = await orchestrator.resume(
-    pipeline_id="abc123",
     from_phase="validation"
 )
 ```
@@ -278,13 +278,14 @@ Configuration is handled through the PipelineConfig dataclass in the orchestrato
 class PipelineConfig:
     input_file: str
     output_path: str = "./output"
+    conmeds_file: Optional[str] = None  # Existing conmeds.yml to augment
     disease_module: str = "nsclc"  # Any disease: "nsclc", "breast_cancer", "prostate_cancer", etc.
-    enable_llm_classification: bool = False
+    enable_llm_classification: bool = True  # Default: True (core feature)
     llm_provider: str = "claude_cli"
     enable_web_research: bool = True
     enable_validation: bool = True
-    batch_size: int = 100
-    max_workers: int = 4
+    confidence_threshold: float = 0.5
+    enable_checkpoints: bool = True
 ```
 
 ### Checkpoint System (`checkpoint.py`)
@@ -441,27 +442,31 @@ for phase, result in results.items():
 ## CLI Integration
 
 ```bash
-# Run full pipeline for any disease
+# Activate virtual environment
+source .venv/bin/activate
+
+# Run full pipeline for any disease (LLM enabled by default)
 med-aug pipeline run data.csv \
+  --conmeds data/conmeds_defaults.yml \
   --disease nsclc \
-  --llm \
   --output results/
 
 # Run for different diseases
 med-aug pipeline run data.csv \
+  --conmeds data/conmeds_defaults.yml \
   --disease breast_cancer \
-  --llm \
   --output results/
 
-# Run without LLM (faster, rule-based)
+# Run without LLM (not recommended)
 med-aug pipeline run data.csv \
+  --conmeds data/conmeds_defaults.yml \
   --disease nsclc \
   --no-llm
 
 # Resume from checkpoint
-med-aug pipeline resume \
-  --id abc123 \
-  --from validation
+med-aug pipeline run data.csv \
+  --conmeds data/conmeds_defaults.yml \
+  --resume validation
 
 # Check pipeline status
 med-aug pipeline status abc123
@@ -476,7 +481,7 @@ med-aug pipeline clean --days 7
 med-aug pipeline analyze data.csv
 
 # Extract medications only
-med-aug pipeline extract data.csv medications_column
+med-aug pipeline extract data.csv medications_column --output results.json
 ```
 
 ## Phase Dependencies

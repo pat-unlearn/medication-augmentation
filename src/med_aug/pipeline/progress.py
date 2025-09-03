@@ -287,8 +287,11 @@ class ProgressTracker:
     def _start_rich_display(self):
         """Start rich progress display."""
         layout = self._create_layout()
-        self._live = Live(layout, refresh_per_second=1, console=console)
+        self._live = Live(layout, refresh_per_second=2, console=console)  # Update twice per second
         self._live.start()
+        
+        # Start background task to update display continuously
+        asyncio.create_task(self._continuous_update())
 
     def _start_simple_display(self):
         """Start simple progress display."""
@@ -370,6 +373,17 @@ class ProgressTracker:
             return "[dim]⏭️ Skipped[/dim]"
         else:
             return "[dim]⏳ Pending[/dim]"
+
+    async def _continuous_update(self):
+        """Continuously update the display for real-time duration updates."""
+        while not self._stop_event.is_set():
+            try:
+                await asyncio.sleep(1.0)  # Update every second
+                if self.display_mode == "rich" and self._live:
+                    self._live.update(self._create_layout())
+            except Exception as e:
+                logger.debug("continuous_update_error", error=str(e))
+                break
 
     def get_report(self) -> ProgressReport:
         """Get current progress report."""

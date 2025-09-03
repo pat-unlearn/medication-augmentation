@@ -49,7 +49,7 @@ class DiseaseRegistry:
                             self._instances[disease_name] = instance
 
                             logger.debug(
-                                f"Discovered disease module",
+                                "Discovered disease module",
                                 disease=disease_name,
                                 display_name=instance.display_name,
                             )
@@ -62,13 +62,13 @@ class DiseaseRegistry:
 
                 except ImportError as e:
                     logger.error(
-                        f"Failed to import disease module",
+                        "Failed to import disease module",
                         module=module_name,
                         error=str(e),
                     )
                 except Exception as e:
                     logger.error(
-                        f"Error discovering disease module",
+                        "Error discovering disease module",
                         module=module_name,
                         error=str(e),
                     )
@@ -94,7 +94,7 @@ class DiseaseRegistry:
                 return instance
             except Exception as e:
                 logger.error(
-                    f"Failed to create disease module instance",
+                    "Failed to create disease module instance",
                     disease=name,
                     error=str(e),
                 )
@@ -137,13 +137,13 @@ class DiseaseRegistry:
             self._instances[disease_name] = instance
 
             logger.debug(
-                f"Manually registered disease module",
+                "Manually registered disease module",
                 disease=disease_name,
                 display_name=instance.display_name,
             )
         except Exception as e:
             logger.error(
-                f"Failed to register disease module",
+                "Failed to register disease module",
                 module_class=module_class.__name__,
                 error=str(e),
             )
@@ -163,7 +163,7 @@ class DiseaseRegistry:
             del self._modules[name]
             if name in self._instances:
                 del self._instances[name]
-            logger.info(f"Unregistered disease module", disease=name)
+            logger.info("Unregistered disease module", disease=name)
             return True
         return False
 
@@ -172,7 +172,7 @@ class DiseaseRegistry:
         self._modules.clear()
         self._instances.clear()
         self._discover_modules()
-        logger.info(f"Reloaded disease modules", count=len(self._modules))
+        logger.info("Reloaded disease modules", count=len(self._modules))
 
 
 # Global registry instance

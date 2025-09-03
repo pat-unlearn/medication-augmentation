@@ -670,13 +670,15 @@ if evaluation_report.metrics.weighted_f1 < 0.90:
 ### **CLI Integration**
 
 ```bash
+# Activate virtual environment
+source .venv/bin/activate
+
 # Run pipeline with comprehensive evaluation
-python -m src.med_aug.cli.app pipeline run \
-  --input clinical_data.csv \
+med-aug pipeline run clinical_data.csv \
+  --conmeds data/conmeds_defaults.yml \
   --disease nsclc \
-  --enable-llm \
   --evaluate \
-  --min-confidence 0.8 \
+  --confidence 0.8 \
   --output ./results
 
 # Evaluation outputs generated:

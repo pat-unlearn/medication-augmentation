@@ -569,6 +569,7 @@ class ConmedsYAMLExporter(BaseExporter):
             data: Dictionary with 'classifications' key containing medication classifications
             output_path: Output file path
             title: Title for the YAML file
+            **kwargs: Additional options including 'conmeds_file' for base conmeds file
 
         Returns:
             Path to exported conmeds.yml file
@@ -580,6 +581,9 @@ class ConmedsYAMLExporter(BaseExporter):
         # Ensure .yml extension
         if output_path.suffix not in [".yml", ".yaml"]:
             output_path = output_path.with_suffix(".yml")
+
+        # Load existing conmeds as base
+        base_conmeds = self._load_base_conmeds(kwargs.get('conmeds_file'))
 
         # Extract classifications from data
         classifications = data.get("classifications", {})
@@ -598,11 +602,11 @@ class ConmedsYAMLExporter(BaseExporter):
                             classifications[drug_class] = []
                         classifications[drug_class].append(medication)
 
-        # Convert to conmeds.yml format
-        conmeds = self._convert_to_conmeds_format(classifications)
+        # Augment base conmeds with new classifications
+        augmented_conmeds = self._augment_conmeds(base_conmeds, classifications)
 
         # Add metadata as comments
-        yaml_content = self._generate_yaml_with_metadata(conmeds, title)
+        yaml_content = self._generate_yaml_with_metadata(augmented_conmeds, title)
 
         # Write YAML file
         with open(output_path, "w") as f:
@@ -611,35 +615,89 @@ class ConmedsYAMLExporter(BaseExporter):
         logger.info(
             "conmeds_yaml_export_completed",
             path=str(output_path),
-            drug_classes=len(conmeds),
-            total_medications=sum(len(meds) for meds in conmeds.values()),
+            drug_classes=len(augmented_conmeds),
+            total_medications=sum(len(meds) for meds in augmented_conmeds.values()),
         )
 
         return output_path
 
-    def _convert_to_conmeds_format(
-        self, classifications: Dict[str, List[str]]
-    ) -> Dict[str, List[str]]:
+    def _load_base_conmeds(self, conmeds_file: Optional[str]) -> Dict[str, List[str]]:
         """
-        Convert generic drug class classifications to conmeds.yml format.
+        Load existing conmeds file as the base for augmentation.
 
         Args:
-            classifications: Dict mapping drug class names to medication lists
+            conmeds_file: Path to the base conmeds file
 
         Returns:
             Dict in conmeds.yml format with 'taking_drugname' keys
         """
-        conmeds = {}
+        import yaml
+
+        if not conmeds_file:
+            logger.warning("no_base_conmeds_file", message="No base conmeds file provided, starting empty")
+            return {}
+
+        conmeds_path = Path(conmeds_file)
+        if not conmeds_path.exists():
+            logger.warning("base_conmeds_not_found", path=str(conmeds_path))
+            return {}
+
+        try:
+            with open(conmeds_path, 'r') as f:
+                base_conmeds = yaml.safe_load(f)
+            
+            if not isinstance(base_conmeds, dict):
+                logger.warning("invalid_base_conmeds_format", path=str(conmeds_path))
+                return {}
+            
+            logger.info(
+                "base_conmeds_loaded",
+                path=str(conmeds_path),
+                drug_classes=len(base_conmeds),
+                total_medications=sum(len(meds) if isinstance(meds, list) else 0 for meds in base_conmeds.values())
+            )
+            
+            return base_conmeds
+        except Exception as e:
+            logger.error("base_conmeds_load_error", path=str(conmeds_path), error=str(e))
+            return {}
+
+    def _augment_conmeds(
+        self, 
+        base_conmeds: Dict[str, List[str]], 
+        classifications: Dict[str, List[str]]
+    ) -> Dict[str, List[str]]:
+        """
+        Augment base conmeds with new medication classifications.
+
+        Args:
+            base_conmeds: Existing conmeds in simple array format
+            classifications: New classifications to add
+
+        Returns:
+            Dict in conmeds.yml format with augmented medications
+        """
+        # Start with a copy of the base conmeds
+        augmented = base_conmeds.copy()
 
         for drug_class, medications in classifications.items():
             # Convert drug class name to conmeds format
             conmeds_key = self._convert_drug_class_name(drug_class)
 
-            # Ensure medications are unique and sorted
-            unique_meds = sorted(list(set(medications)))
-            conmeds[conmeds_key] = unique_meds
+            # If this drug class already exists, add to it
+            if conmeds_key in augmented:
+                existing_meds = set(augmented[conmeds_key])
+                new_meds = [med for med in medications if med not in existing_meds]
+                if new_meds:
+                    augmented[conmeds_key].extend(new_meds)
+                    # Keep sorted and unique
+                    augmented[conmeds_key] = sorted(list(set(augmented[conmeds_key])))
+            else:
+                # New drug class - add it
+                unique_meds = sorted(list(set(medications)))
+                augmented[conmeds_key] = unique_meds
 
-        return conmeds
+        return augmented
 
     def _convert_drug_class_name(self, drug_class: str) -> str:
         """
@@ -668,30 +726,14 @@ class ConmedsYAMLExporter(BaseExporter):
     def _generate_yaml_with_metadata(
         self, conmeds: Dict[str, List[str]], title: str
     ) -> str:
-        """Generate YAML content with metadata comments."""
-        import yaml
-
-        lines = [
-            f"# {title}",
-            f"# Generated: {datetime.now().isoformat()}",
-            f"# Generator: Medication Augmentation System v1.0.0",
-            f"# Drug Classes: {len(conmeds)}",
-            f"# Total Medications: {sum(len(meds) for meds in conmeds.values())}",
-            "",
-            "# NSCLC Medication Classifications",
-            "# Format: taking_drugname: [list, of, medication, names]",
-            "# Each list includes brand names, generic names, and research codes",
-            "",
-        ]
-
-        # Generate clean YAML
-        yaml_content = yaml.dump(
-            conmeds,
-            default_flow_style=False,
-            sort_keys=True,
-            allow_unicode=True,
-            indent=2,
-        )
-
-        # Combine metadata and YAML content
-        return "\n".join(lines) + yaml_content
+        """Generate YAML content matching original format exactly."""
+        lines = []
+        
+        # Sort keys to match original order
+        for key in sorted(conmeds.keys()):
+            medications = conmeds[key]
+            # Format as simple array on single line like original
+            med_list = ", ".join(medications)
+            lines.append(f"{key}: [{med_list}]")
+        
+        return "\n".join(lines) + "\n"

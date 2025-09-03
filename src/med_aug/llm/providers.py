@@ -15,12 +15,17 @@ from ..core.logging import get_logger
 logger = get_logger(__name__)
 
 
+class LLMError(Exception):
+    """Exception raised for LLM-related errors."""
+    pass
+
+
 class LLMModel(Enum):
     """Available LLM models."""
 
     CLAUDE_3_OPUS = "claude-3-opus"
     CLAUDE_3_SONNET = "claude-3-sonnet"
-    CLAUDE_3_HAIKU = "claude-3-haiku"
+    CLAUDE_4_SONNET = "claude-4-sonnet"
     GPT_4 = "gpt-4"
     GPT_35_TURBO = "gpt-3.5-turbo"
     MOCK = "mock"
@@ -30,10 +35,10 @@ class LLMModel(Enum):
 class LLMConfig:
     """Configuration for LLM providers."""
 
-    model: LLMModel = LLMModel.CLAUDE_3_HAIKU
+    model: LLMModel = LLMModel.CLAUDE_3_SONNET
     temperature: float = 0.0
     max_tokens: int = 4096
-    timeout: int = 30
+    timeout: int = 120  # Increased for complex prompts
     retry_attempts: int = 3
     retry_delay: float = 1.0
     api_key: Optional[str] = None
@@ -133,8 +138,7 @@ class ClaudeCLIProvider(LLMProvider):
         Args:
             config: Provider configuration
         """
-        super().__init__(config or LLMConfig(model=LLMModel.CLAUDE_3_HAIKU))
-        self.cli_command = "claude"
+        super().__init__(config or LLMConfig(model=LLMModel.CLAUDE_4_SONNET))
 
     async def generate(
         self, prompt: str, system: Optional[str] = None, **kwargs
@@ -152,40 +156,23 @@ class ClaudeCLIProvider(LLMProvider):
         """
         logger.info("claude_cli_generation_started", prompt_length=len(prompt))
 
-        # Prepare the full prompt
-        full_prompt = prompt
-        if system:
-            full_prompt = f"{system}\n\n{prompt}"
-
-        # Create temporary file for prompt (handles escaping issues)
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as tmp:
-            tmp.write(full_prompt)
-            prompt_file = tmp.name
+        # For Claude CLI, create a simple direct prompt
+        # Convert complex classification prompts to simple formats
+        simple_prompt = self._simplify_prompt_for_cli(prompt, system)
 
         try:
-            # Build command
-            cmd = [
-                self.cli_command,
-                "-T",
-                str(self.config.temperature),
-                "-m",
-                str(self.config.max_tokens),
-            ]
-
-            # Add model selection if specified
+            # Build simple Claude CLI command as you specified
             model_map = {
-                LLMModel.CLAUDE_3_OPUS: "claude-3-opus-20240229",
-                LLMModel.CLAUDE_3_SONNET: "claude-3-sonnet-20240229",
-                LLMModel.CLAUDE_3_HAIKU: "claude-3-haiku-20240307",
+                LLMModel.CLAUDE_3_OPUS: "opus",
+                LLMModel.CLAUDE_3_SONNET: "sonnet",
+                LLMModel.CLAUDE_4_SONNET: "sonnet",
             }
 
-            if self.config.model in model_map:
-                cmd.extend(["-M", model_map[self.config.model]])
+            model = model_map.get(self.config.model, "sonnet")  # Default to sonnet
 
-            # Add prompt file
-            cmd.append(f"@{prompt_file}")
+            cmd = ['claude', '--model', model, '--print', simple_prompt]
 
-            logger.debug("claude_cli_command", command=" ".join(cmd))
+            logger.debug("claude_cli_command", command=" ".join(cmd[:-1]) + " [prompt]")  # Don't log full prompt
 
             # Execute command
             process = await asyncio.create_subprocess_exec(
@@ -229,15 +216,58 @@ class ClaudeCLIProvider(LLMProvider):
                 },
             )
 
-        finally:
-            # Clean up temporary file
-            Path(prompt_file).unlink(missing_ok=True)
+        except Exception as e:
+            logger.error("claude_cli_generation_failed", error=str(e))
+            raise LLMError(f"Claude CLI failed: {e}")
+
+    def _simplify_prompt_for_cli(self, prompt: str, system: Optional[str] = None) -> str:
+        """
+        Simplify complex prompts for Claude CLI to avoid conversational responses.
+
+        Args:
+            prompt: Original complex prompt
+            system: System message
+
+        Returns:
+            Simplified direct prompt
+        """
+        # Check if this is a medication classification prompt
+        if "classify" in prompt.lower() and "medication" in prompt.lower():
+            # Extract medication name from prompt
+            import re
+            med_match = re.search(r"Medication:\s*([^\n]+)", prompt)
+            if med_match:
+                medication = med_match.group(1).strip()
+                return f"What is the drug class for {medication}? Answer with one or two words only."
+
+        # Check if this is a batch classification prompt
+        if "classify these medications" in prompt.lower():
+            # For batch prompts, use them directly as they're already simplified
+            return prompt
+
+        # Check if this is a validation prompt
+        if "validate" in prompt.lower() and "medication" in prompt.lower():
+            med_match = re.search(r"Input:\s*([^\n]+)", prompt)
+            if med_match:
+                medication = med_match.group(1).strip()
+                return f"Is '{medication}' a valid medication name? Answer: Yes or No"
+
+        # For other prompts, create a simple version
+        full_prompt = prompt
+        if system:
+            full_prompt = f"{system}\n\n{prompt}"
+
+        # Truncate if too long and add direct instruction
+        if len(full_prompt) > 500:
+            full_prompt = full_prompt[:400] + "...\n\nAnswer directly and concisely."
+
+        return full_prompt
 
     async def is_available(self) -> bool:
         """Check if Claude CLI is available."""
         try:
             process = await asyncio.create_subprocess_exec(
-                self.cli_command,
+                "claude",
                 "--version",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,

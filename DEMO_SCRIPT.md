@@ -1,14 +1,14 @@
 # Medication Augmentation System - Team Demonstration Script
 
-**Duration:** 15-20 minutes  
-**Prerequisites:** Python 3.10+, uv installed  
+**Duration:** 15-20 minutes
+**Prerequisites:** Python 3.10+, uv installed
 
 ---
 
 ## 🎯 **Demo Objectives**
 
 1. Show how our system processes messy clinical data
-2. Demonstrate intelligent medication classification  
+2. Demonstrate intelligent medication classification
 3. Highlight quality assurance and evaluation capabilities
 4. Display real output: augmented conmeds.yml files
 
@@ -43,7 +43,7 @@ head -10 data/sample_nsclc.csv
 ```
 PATIENT_ID,AGENT,DOSE,START_DATE,END_DATE,REASON
 P001,Pembrolizumab,200mg,2024-01-15,2024-06-15,First-line therapy
-P002,Keytruda,100mg,2024-02-01,2024-07-01,Immunotherapy  
+P002,Keytruda,100mg,2024-02-01,2024-07-01,Immunotherapy
 P003,osimertinib,80mg,2024-01-20,2024-08-20,EGFR mutation
 P004,Tagrisso,40mg,2024-03-01,2024-09-01,Targeted therapy
 P005,Carboplatin/Paclitaxel,AUC5/175mg,2024-01-10,2024-04-10,Combination chemo
@@ -63,7 +63,7 @@ P005,Carboplatin/Paclitaxel,AUC5/175mg,2024-01-10,2024-04-10,Combination chemo
 # Show system information
 python -m src.med_aug.cli.app info
 
-# Display available disease modules  
+# Display available disease modules
 python -m src.med_aug.cli.app diseases list
 
 # Show NSCLC module details
@@ -115,7 +115,7 @@ Unique medications: 18
 
 Top Medications:
   Pembrolizumab: 3
-  Osimertinib: 2  
+  Osimertinib: 2
   Carboplatin: 2
   Alectinib: 2
   Nivolumab: 2
@@ -129,7 +129,7 @@ cat demo_results/extracted_medications.json | python -m json.tool | head -20
 
 **💬 Talking Points:**
 - "System normalized 'Keytruda' → 'Pembrolizumab', 'Tagrisso' → 'Osimertinib'"
-- "Handles combination drugs: 'Carboplatin/Paclitaxel' → separate medications"  
+- "Handles combination drugs: 'Carboplatin/Paclitaxel' → separate medications"
 - "Removes dosage information: '200mg' stripped from medication names"
 - "Preserves all original variants for audit trail"
 
@@ -152,7 +152,7 @@ ls -la demo_results/basic_pipeline/
 echo "=== Pipeline Summary ==="
 cat demo_results/basic_pipeline/pipeline_summary.json | python -m json.tool
 
-echo "=== Sample Classification Results ==="  
+echo "=== Sample Classification Results ==="
 head -10 demo_results/basic_pipeline/classification_results.csv
 ```
 
@@ -185,7 +185,7 @@ head -20 demo_results/basic_pipeline/conmeds_augmented.yml
 echo "Advanced pipeline with LLM classification and evaluation:"
 echo "python -m src.med_aug.cli.app pipeline run \\"
 echo "  data/sample_nsclc.csv \\"
-echo "  --disease nsclc \\"  
+echo "  --disease nsclc \\"
 echo "  --llm \\"
 echo "  --evaluate \\"
 echo "  --confidence 0.8 \\"
@@ -194,7 +194,7 @@ echo "  --output demo_results/advanced_pipeline"
 
 **💬 Talking Points (if LLM available):**
 - "The --llm flag enables Claude-powered medication classification"
-- "The --evaluate flag runs our comprehensive quality assessment"  
+- "The --evaluate flag runs our comprehensive quality assessment"
 - "System provides precision, recall, F1 scores for classification accuracy"
 - "LLM validation prevents false positives from corrupting the database"
 
@@ -211,7 +211,7 @@ echo "  --output demo_results/advanced_pipeline"
 - "Real clinical datasets are messy - our system handles that complexity"
 - "Brand names, generics, combinations, dosages all mixed together"
 
-### **2. Intelligent Processing**  
+### **2. Intelligent Processing**
 - "Automated column detection - works on any clinical dataset format"
 - "Sophisticated normalization removes noise while preserving meaning"
 - "Disease-agnostic architecture - same pipeline works for any therapeutic area"
@@ -250,19 +250,19 @@ demo_results/
 
 ### **Likely Questions & Answers**
 
-**Q: "How accurate is the medication classification?"**  
+**Q: "How accurate is the medication classification?"**
 A: "Our evaluation framework measures precision, recall, and F1 scores. In testing, we achieve >90% precision for existing medications, with LLM validation for new discoveries."
 
-**Q: "Can it handle other diseases besides lung cancer?"**  
+**Q: "Can it handle other diseases besides lung cancer?"**
 A: "Absolutely - the architecture is disease-agnostic. NSCLC is our first module, but we can create modules for breast cancer, prostate cancer, etc. using the same pipeline."
 
-**Q: "What if it makes mistakes?"**  
+**Q: "What if it makes mistakes?"**
 A: "Multiple safeguards: evaluation framework, LLM validation, audit trails, and manual review workflows. System is conservative - when in doubt, it flags for human review."
 
-**Q: "How long does processing take?"**  
+**Q: "How long does processing take?"**
 A: "Depends on dataset size and features enabled. Basic rule-based processing: seconds to minutes. LLM classification: minutes to hours for large datasets. All optimized for clinical production use."
 
-**Q: "Integration with existing pipelines?"**  
+**Q: "Integration with existing pipelines?"**
 A: "Output is standard YAML format that drops directly into existing clinical processing pipelines. Backward compatible - all original medication classifications preserved."
 
 ---
@@ -270,13 +270,13 @@ A: "Output is standard YAML format that drops directly into existing clinical pr
 ## 🎬 **Closing Points**
 
 1. **System transforms manual curation into automated intelligence**
-2. **Handles real-world clinical data complexity with sophisticated normalization**  
+2. **Handles real-world clinical data complexity with sophisticated normalization**
 3. **Quality assurance prevents corruption of clinical databases**
 4. **Ready for production use with comprehensive evaluation and audit capabilities**
 5. **Extensible architecture scales to any therapeutic area**
 
 ---
 
-**Demo Duration:** ~15-20 minutes  
-**Files Generated:** Fully functional augmented conmeds.yml ready for production use  
+**Demo Duration:** ~15-20 minutes
+**Files Generated:** Fully functional augmented conmeds.yml ready for production use
 **Next Steps:** Discuss integration timeline and requirements for your clinical pipelines

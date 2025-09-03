@@ -39,7 +39,9 @@ def run_pipeline(
     no_validation: bool = typer.Option(
         False, "--no-validation", help="Disable validation"
     ),
-    disable_llm: bool = typer.Option(False, "--no-llm", help="Disable LLM classification"),
+    disable_llm: bool = typer.Option(
+        False, "--no-llm", help="Disable LLM classification"
+    ),
     llm_provider: str = typer.Option(
         "claude_cli", "--llm-provider", help="LLM provider to use"
     ),
@@ -72,8 +74,12 @@ def run_pipeline(
     if conmeds_file is None:
         conmeds_file = Path("data/conmeds_defaults.yml")
         if not conmeds_file.exists():
-            console.print(f"[yellow]Warning: Default conmeds file not found: {conmeds_file}[/yellow]")
-            console.print("[yellow]Pipeline will create new conmeds.yml without augmenting existing entries[/yellow]")
+            console.print(
+                f"[yellow]Warning: Default conmeds file not found: {conmeds_file}[/yellow]"
+            )
+            console.print(
+                "[yellow]Pipeline will create new conmeds.yml without augmenting existing entries[/yellow]"
+            )
 
     # Set output directory
     if output_dir is None:
@@ -85,7 +91,9 @@ def run_pipeline(
     config = PipelineConfig(
         input_file=str(input_file),
         output_path=str(output_dir),
-        conmeds_file=str(conmeds_file) if conmeds_file and conmeds_file.exists() else None,
+        conmeds_file=(
+            str(conmeds_file) if conmeds_file and conmeds_file.exists() else None
+        ),
         disease_module=disease,
         confidence_threshold=confidence,
         enable_web_research=not no_web,

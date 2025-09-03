@@ -75,7 +75,7 @@ class ClassificationResult:
             Classification result
         """
         try:
-            # Try to parse as JSON
+            # Try to parse as JSON first
             data = json.loads(response_text)
 
             return cls(
@@ -89,24 +89,74 @@ class ClassificationResult:
             )
 
         except json.JSONDecodeError:
-            # Try to extract from text
-            logger.warning("classification_json_parse_failed", medication=medication)
+            # For Claude CLI, expect simple drug class name responses
+            logger.debug("parsing_simple_response", medication=medication, response=response_text)
 
-            # Look for patterns in text
-            confidence_match = re.search(
-                r"confidence[:\s]+([0-9.]+)", response_text, re.IGNORECASE
-            )
-            class_match = re.search(
-                r"class(?:ification)?[:\s]+(\w+)", response_text, re.IGNORECASE
-            )
+            # Look for drug class names in the response
+            import re
+            
+            # Common drug class patterns to extract
+            drug_class_patterns = [
+                r'\*\*([^*\n]+)\*\*',  # **PD-1 inhibitor**
+                r'([A-Za-z0-9-]+\s+inhibitor)',  # PD-1 inhibitor
+                r'(immunotherapy)',  # immunotherapy
+                r'(chemotherapy)',  # chemotherapy
+                r'(targeted therapy)',  # targeted therapy
+                r'(taking_[a-z_]+)',  # taking_something
+                r'Answer[:\s]*([^\n.]+)',  # Answer: drug class
+                r'^([A-Za-z0-9-]+(?:\s+[A-Za-z0-9-]+){0,2})(?:\.|$)',  # First 1-3 words
+            ]
+            
+            primary_class = "unknown"
+            confidence = 0.0
+            
+            # Try each pattern
+            for pattern in drug_class_patterns:
+                matches = re.findall(pattern, response_text, re.IGNORECASE)
+                if matches:
+                    candidate = matches[0].strip().lower()
+                    # Clean up the candidate
+                    candidate = candidate.replace('*', '').replace('.', '').strip()
+                    if candidate and len(candidate) < 50:
+                        primary_class = candidate.replace(' ', '_').replace('-', '_')
+                        confidence = 0.8
+                        break
+            
+            # If still unknown, try fallback parsing
+            if primary_class == "unknown":
+                # Clean up the response - take first meaningful line 
+                lines = [line.strip() for line in response_text.strip().split('\n') if line.strip()]
+                if lines:
+                    first_line = lines[0]
+                    
+                    # Remove common prefixes
+                    prefixes_to_remove = [
+                        "Based on my examination",
+                        "The medication",
+                        "This medication", 
+                        "The drug class is",
+                        "The drug class for",
+                        "Drug class:",
+                        "Classification:",
+                        "Class:",
+                        "**",
+                    ]
+                    
+                    for prefix in prefixes_to_remove:
+                        if first_line.lower().startswith(prefix.lower()):
+                            first_line = first_line[len(prefix):].strip()
+                            break
+                    
+                    # Extract reasonable drug class
+                    if first_line and len(first_line) < 100:
+                        primary_class = first_line.lower().replace(' ', '_').replace('*', '').rstrip('.')
+                        confidence = 0.6
 
             return cls(
                 medication=medication,
-                primary_class=class_match.group(1) if class_match else "unknown",
-                confidence=(
-                    float(confidence_match.group(1)) if confidence_match else 0.0
-                ),
-                reasoning=response_text[:200],  # Use first 200 chars as reasoning
+                primary_class=primary_class,
+                confidence=confidence,
+                reasoning=f"Claude CLI response: {response_text[:100]}",
             )
 
 
@@ -254,7 +304,7 @@ class MedicationClassifier:
             )
 
     async def classify_batch(
-        self, medications: List[str], batch_size: int = 10
+        self, medications: List[str], batch_size: int = 10, progress_callback=None
     ) -> BatchClassificationResult:
         """
         Classify multiple medications.
@@ -262,6 +312,7 @@ class MedicationClassifier:
         Args:
             medications: List of medication names
             batch_size: Number of medications per batch
+            progress_callback: Optional callback function for progress updates
 
         Returns:
             Batch classification result
@@ -271,55 +322,101 @@ class MedicationClassifier:
 
         all_results: Dict[str, ClassificationResult] = {}
 
+        # Process medications in batches for efficiency
+        total = len(medications)
+        
         # Process in batches
-        for i in range(0, len(medications), batch_size):
-            batch = medications[i : i + batch_size]
-
-            # Prepare batch prompt
-            drug_classes = "\n".join(
-                [f"- {dc.name}" for dc in self.disease.drug_classes]
-            )
-
-            response = await self.llm_service.generate_with_template(
-                "batch_classification",
-                medications="\n".join(f"- {med}" for med in batch),
-                disease=self.disease.display_name,
-                drug_classes=drug_classes,
-            )
-
-            # Parse batch response
+        for i in range(0, total, batch_size):
+            batch = medications[i:i + batch_size]
+            batch_num = (i // batch_size) + 1
+            total_batches = (total + batch_size - 1) // batch_size
+            
+            if progress_callback:
+                progress_callback(i, total, f"Processing batch {batch_num}/{total_batches} ({len(batch)} medications)")
+            
+            # Create batch prompt for Claude CLI
+            batch_prompt = "Classify these medications. For each medication, respond with just the drug class name (1-2 words):\n\n"
+            for j, med in enumerate(batch, 1):
+                batch_prompt += f"{j}. {med}\n"
+            batch_prompt += "\nRespond in format:\n1. [drug class]\n2. [drug class]\n3. [drug class]\netc."
+            
             try:
-                batch_data = json.loads(response.content)
-                classifications = batch_data.get("classifications", {})
-
-                # Create individual results
-                for drug_class, meds in classifications.items():
-                    for med in meds:
-                        all_results[med] = ClassificationResult(
-                            medication=med,
+                # Send batch request
+                response = await self.llm_service.generate(
+                    batch_prompt,
+                    system="You are a medical expert. Classify medications into drug classes."
+                )
+                
+                # Parse batch response
+                response_lines = [line.strip() for line in response.content.strip().split('\n') if line.strip()]
+                
+                # Match responses to medications
+                for j, medication in enumerate(batch):
+                    try:
+                        # Look for numbered response (e.g., "1. immunotherapy")
+                        drug_class = "unknown"
+                        confidence = 0.0
+                        
+                        # Try to find the corresponding line
+                        pattern = f"{j+1}."
+                        matching_line = None
+                        for line in response_lines:
+                            if line.startswith(pattern):
+                                matching_line = line
+                                break
+                        
+                        if matching_line:
+                            # Extract drug class after the number
+                            drug_class_raw = matching_line.split('.', 1)[1].strip()
+                            drug_class = drug_class_raw.lower().replace(' ', '_').replace('-', '_')
+                            confidence = 0.8
+                        elif j < len(response_lines):
+                            # Fallback: use line by position
+                            drug_class_raw = response_lines[j].strip()
+                            if drug_class_raw and not drug_class_raw.startswith(('1.', '2.', '3.', '4.', '5.')):
+                                drug_class = drug_class_raw.lower().replace(' ', '_').replace('-', '_')
+                                confidence = 0.7
+                        
+                        result = ClassificationResult(
+                            medication=medication,
                             primary_class=drug_class,
-                            confidence=batch_data.get("summary", {}).get(
-                                "confidence", 0.7
-                            ),
-                            reasoning="Batch classification",
+                            confidence=confidence,
+                            reasoning=f"Batch classification: {response.content[:100]}..."
                         )
-
-                # Handle unclassified
-                for med in batch_data.get("unclassified", []):
-                    all_results[med] = ClassificationResult(
-                        medication=med,
+                        
+                        all_results[medication] = result
+                        
+                        logger.debug("batch_medication_classified",
+                                   medication=medication,
+                                   classification=drug_class,
+                                   confidence=confidence)
+                        
+                    except Exception as e:
+                        logger.error("batch_medication_parse_failed", 
+                                   medication=medication, error=str(e))
+                        all_results[medication] = ClassificationResult(
+                            medication=medication,
+                            primary_class="unknown",
+                            confidence=0.0,
+                            reasoning=f"Batch parsing error: {str(e)}"
+                        )
+                
+            except Exception as e:
+                logger.error("batch_classification_failed", 
+                           batch=batch, error=str(e))
+                
+                # Create error results for the entire batch
+                for medication in batch:
+                    all_results[medication] = ClassificationResult(
+                        medication=medication,
                         primary_class="unknown",
                         confidence=0.0,
-                        reasoning="Could not classify",
+                        reasoning=f"Batch request failed: {str(e)}"
                     )
-
-            except json.JSONDecodeError:
-                logger.warning("batch_response_parse_failed", batch_index=i)
-
-                # Fallback to individual classification
-                for med in batch:
-                    result = await self.classify(med, use_context=True)
-                    all_results[med] = result
+        
+        # Final progress callback
+        if progress_callback:
+            progress_callback(total, total, "Classification complete")
 
         # Aggregate results
         classifications_by_class: Dict[str, List[str]] = {}

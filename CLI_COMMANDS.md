@@ -25,7 +25,7 @@ med-aug pipeline run data/sample_nsclc.csv --disease nsclc --output ./results
 # Navigate to project directory
 cd /Users/pat/Developer/medication-augmentation
 
-# Activate virtual environment  
+# Activate virtual environment
 source .venv/bin/activate
 
 # You're ready! Now use clean commands:
@@ -36,7 +36,7 @@ source .venv/bin/activate
 # Test CLI is working
 med-aug test
 
-# Show system information  
+# Show system information
 med-aug info
 
 # Show help
@@ -177,7 +177,7 @@ head -10 demo_real/conmeds_augmented.yml
 # Analyze longitudinal treatment data
 med-aug pipeline analyze data/timeline_treatments.csv
 
-# Extract cancer treatments 
+# Extract cancer treatments
 med-aug pipeline extract data/timeline_treatments.csv AGENT --output ./timeline_meds.json
 
 # Run augmentation
@@ -199,9 +199,9 @@ med-aug pipeline run data/sample_nsclc.csv \
 
 **Why Real Data is Better:**
 - ✅ **Authentic**: 20,384 real clinical records with 2,290 unique medications
-- ✅ **Impressive Scale**: Shows system handles large-scale clinical data  
+- ✅ **Impressive Scale**: Shows system handles large-scale clinical data
 - ✅ **Real Challenges**: Contains actual messy medication names from trials
 - ✅ **Credible Demo**: Your clinical team will recognize authentic scenarios
 
-**Output:** Production-ready augmented conmeds.yml file from real clinical data  
+**Output:** Production-ready augmented conmeds.yml file from real clinical data
 **Impression:** Robust system that handles authentic clinical datasets

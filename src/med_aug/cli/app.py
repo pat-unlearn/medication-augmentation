@@ -26,7 +26,6 @@ from rich.text import Text
 from typing import Optional
 from pathlib import Path
 import sys
-import os
 
 # Import disease registry to trigger auto-discovery (now with clean logging)
 from ..diseases import disease_registry
@@ -97,6 +96,7 @@ def main_callback(
     else:
         # Minimal logging for clean CLI output
         import logging
+
         logging.getLogger().setLevel(logging.ERROR)
 
     # Only log application start in debug mode
