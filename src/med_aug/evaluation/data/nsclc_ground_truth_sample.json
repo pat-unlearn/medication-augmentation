@@ -1,0 +1,191 @@
+{
+  "metadata": {
+    "source": "expert_curation",
+    "created_date": "2025-09-03",
+    "description": "Sample ground truth dataset for NSCLC medications",
+    "expert": "clinical_pharmacist",
+    "total_entries": 50
+  },
+  "entries": [
+    {
+      "medication": "pembrolizumab",
+      "drug_class": "taking_pembrolizumab", 
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "PD-1 inhibitor, FDA approved for NSCLC",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "keytruda",
+      "drug_class": "taking_pembrolizumab",
+      "confidence": 1.0,
+      "source": "expert_validation", 
+      "notes": "Brand name for pembrolizumab",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "osimertinib",
+      "drug_class": "taking_osimertinib",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "EGFR inhibitor for EGFR-positive NSCLC",
+      "validated_by": "clinical_expert", 
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "tagrisso",
+      "drug_class": "taking_osimertinib",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "Brand name for osimertinib",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "nivolumab",
+      "drug_class": "taking_nivolumab",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "PD-1 inhibitor for NSCLC immunotherapy",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "opdivo",
+      "drug_class": "taking_nivolumab", 
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "Brand name for nivolumab",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "atezolizumab",
+      "drug_class": "taking_atezolizumab",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "PD-L1 inhibitor for NSCLC", 
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "tecentriq", 
+      "drug_class": "taking_atezolizumab",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "Brand name for atezolizumab",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "carboplatin",
+      "drug_class": "taking_carboplatin",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "Platinum-based chemotherapy for NSCLC",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "paclitaxel",
+      "drug_class": "taking_paclitaxel",
+      "confidence": 1.0, 
+      "source": "expert_validation",
+      "notes": "Taxane chemotherapy for NSCLC",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "taxol",
+      "drug_class": "taking_paclitaxel",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "Brand name for paclitaxel",
+      "validated_by": "clinical_expert", 
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "abraxane",
+      "drug_class": "taking_paclitaxel",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "Nab-paclitaxel formulation",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "pemetrexed",
+      "drug_class": "taking_pemetrexed",
+      "confidence": 1.0,
+      "source": "expert_validation", 
+      "notes": "Antimetabolite chemotherapy for non-squamous NSCLC",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "alimta",
+      "drug_class": "taking_pemetrexed",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "Brand name for pemetrexed",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "crizotinib",
+      "drug_class": "taking_crizotinib", 
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "ALK inhibitor for ALK-positive NSCLC",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "xalkori",
+      "drug_class": "taking_crizotinib",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "Brand name for crizotinib",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "alectinib",
+      "drug_class": "taking_alectinib",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "ALK inhibitor, second-generation",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "alecensa",
+      "drug_class": "taking_alectinib",
+      "confidence": 1.0,
+      "source": "expert_validation", 
+      "notes": "Brand name for alectinib",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "erlotinib",
+      "drug_class": "taking_erlotinib",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "EGFR inhibitor, first-generation",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    },
+    {
+      "medication": "tarceva",
+      "drug_class": "taking_erlotinib",
+      "confidence": 1.0,
+      "source": "expert_validation",
+      "notes": "Brand name for erlotinib",
+      "validated_by": "clinical_expert",
+      "validated_at": "2025-09-03"
+    }
+  ]
+}
