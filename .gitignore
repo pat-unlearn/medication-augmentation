@@ -126,8 +126,8 @@ ENV/
 env.bak/
 venv.bak/
 
-# === Python ===
-__pycache__/
+# === Data Science Team
+.python-version
 *.py[cod]
 *$py.class
 *.so
