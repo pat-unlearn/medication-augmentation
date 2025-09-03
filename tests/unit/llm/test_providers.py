@@ -22,10 +22,10 @@ class TestLLMConfig:
         """Test default configuration values."""
         config = LLMConfig()
 
-        assert config.model == LLMModel.CLAUDE_4_SONNET
+        assert config.model == LLMModel.CLAUDE_3_SONNET
         assert config.temperature == 0.0
         assert config.max_tokens == 4096
-        assert config.timeout == 30
+        assert config.timeout == 120
         assert config.retry_attempts == 3
         assert config.retry_delay == 1.0
 
