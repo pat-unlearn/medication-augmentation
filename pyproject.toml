@@ -11,29 +11,25 @@ dependencies = [
     # CLI Framework
     "typer[all]>=0.9.0",
     "rich>=13.7.0",
-    
     # Data Processing
     "pandas>=2.0.0",
     "polars>=0.20.0",
     "pydantic>=2.5.0",
-    
     # Web Scraping & HTTP
     "httpx>=0.25.0",
     "beautifulsoup4>=4.12.0",
     "lxml>=4.9.0",
-    
     # LLM Integration
     "openai>=1.0.0",
     "anthropic>=0.18.0",
-    
     # Caching & Storage
     "diskcache>=5.6.0",
-    
     # Configuration & Utilities
     "pyyaml>=6.0.0",
     "python-dotenv>=1.0.0",
     "structlog>=23.2.0",
     "aiofiles>=23.2.1",
+    "jinja2>=3.1.6",
 ]
 
 [project.optional-dependencies]
@@ -62,3 +58,6 @@ med-aug = "med_aug.cli.app:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/med_aug"]
