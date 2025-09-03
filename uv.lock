@@ -601,7 +601,10 @@ test = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "pandas" },
     { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
 ]
 
 [package.metadata]
@@ -639,7 +642,12 @@ requires-dist = [
 provides-extras = ["dev", "test"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "pre-commit", specifier = ">=4.3.0" }]
+dev = [
+    { name = "pandas", specifier = ">=2.3.2" },
+    { name = "pre-commit", specifier = ">=4.3.0" },
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pytest-asyncio", specifier = ">=1.1.0" },
+]
 
 [[package]]
 name = "mypy"

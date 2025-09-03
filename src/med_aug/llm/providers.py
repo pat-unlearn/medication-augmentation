@@ -135,6 +135,7 @@ class ClaudeCLIProvider(LLMProvider):
             config: Provider configuration
         """
         super().__init__(config or LLMConfig(model=LLMModel.CLAUDE_4_SONNET))
+        self.cli_command = "claude"
 
     async def generate(
         self, prompt: str, system: Optional[str] = None, **kwargs
@@ -166,7 +167,7 @@ class ClaudeCLIProvider(LLMProvider):
 
             model = model_map.get(self.config.model, "sonnet")  # Default to sonnet
 
-            cmd = ["claude", "--model", model, "--print", simple_prompt]
+            cmd = [self.cli_command, "--model", model, "--print", simple_prompt]
 
             logger.debug(
                 "claude_cli_command", command=" ".join(cmd[:-1]) + " [prompt]"

@@ -99,7 +99,11 @@ class ColumnAnalysisResult(DictMixin):
         """Check if column likely contains medications."""
         return self.confidence >= 0.7
 
-    # to_dict() method provided by DictMixin
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary including computed properties."""
+        data = super().to_dict()
+        data["is_likely"] = self.is_likely_medication_column
+        return data
 
 
 @dataclass

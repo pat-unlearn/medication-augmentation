@@ -45,7 +45,11 @@ class ClassificationResult(DictMixin):
         else:
             return ClassificationConfidence.LOW
 
-    # to_dict() method provided by DictMixin
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary including computed properties."""
+        data = super().to_dict()
+        data["confidence_level"] = self.confidence_level.value
+        return data
 
     @classmethod
     def from_llm_response(
@@ -84,16 +88,17 @@ class ClassificationResult(DictMixin):
             # Look for drug class names in the response
             import re
 
-            # Common drug class patterns to extract
+            # Common drug class patterns to extract (in order of priority)
             drug_class_patterns = [
+                r"Classification[:\s]*([^\n.]+)",  # Classification: drug class
+                r"Answer[:\s]*([^\n.]+)",  # Answer: drug class
                 r"\*\*([^*\n]+)\*\*",  # **PD-1 inhibitor**
-                r"([A-Za-z0-9-]+\s+inhibitor)",  # PD-1 inhibitor
                 r"(immunotherapy)",  # immunotherapy
                 r"(chemotherapy)",  # chemotherapy
                 r"(targeted therapy)",  # targeted therapy
+                r"([A-Za-z0-9-]+\s+inhibitor)",  # PD-1 inhibitor (moved after specific terms)
                 r"(taking_[a-z_]+)",  # taking_something
-                r"Answer[:\s]*([^\n.]+)",  # Answer: drug class
-                r"^([A-Za-z0-9-]+(?:\s+[A-Za-z0-9-]+){0,2})(?:\.|$)",  # First 1-3 words
+                # Removed overly broad pattern that was matching any first words
             ]
 
             primary_class = "unknown"
@@ -108,53 +113,72 @@ class ClassificationResult(DictMixin):
                     candidate = candidate.replace("*", "").replace(".", "").strip()
                     if candidate and len(candidate) < 50:
                         primary_class = candidate.replace(" ", "_").replace("-", "_")
-                        confidence = 0.8
+                        # Try to extract confidence if we found a match
+                        confidence_match = re.search(r"Confidence[:\s]*([0-9.]+)", response_text, re.IGNORECASE)
+                        if confidence_match:
+                            try:
+                                confidence = float(confidence_match.group(1))
+                            except ValueError:
+                                confidence = 0.8  # fallback
+                        else:
+                            confidence = 0.8  # default confidence for pattern matches
                         break
 
-            # If still unknown, try fallback parsing
+            # If still unknown, try fallback parsing only if response doesn't look like an error
             if primary_class == "unknown":
-                # Clean up the response - take first meaningful line
-                lines = [
-                    line.strip()
-                    for line in response_text.strip().split("\n")
-                    if line.strip()
+                # Skip fallback parsing for error messages
+                error_indicators = [
+                    "invalid", "error", "cannot", "unable", "failed", "not found",
+                    "unrecognized", "unknown", "unexpected", "malformed"
                 ]
-                if lines:
-                    first_line = lines[0]
-
-                    # Remove common prefixes
-                    prefixes_to_remove = [
-                        "Based on my examination",
-                        "The medication",
-                        "This medication",
-                        "The drug class is",
-                        "The drug class for",
-                        "Drug class:",
-                        "Classification:",
-                        "Class:",
-                        "**",
+                
+                response_lower = response_text.lower()
+                if any(indicator in response_lower for indicator in error_indicators):
+                    # This looks like an error message, don't try to parse it
+                    pass
+                else:
+                    # Clean up the response - take first meaningful line
+                    lines = [
+                        line.strip()
+                        for line in response_text.strip().split("\n")
+                        if line.strip()
                     ]
+                    if lines:
+                        first_line = lines[0]
 
-                    for prefix in prefixes_to_remove:
-                        if first_line.lower().startswith(prefix.lower()):
-                            first_line = first_line[len(prefix) :].strip()
-                            break
+                        # Remove common prefixes
+                        prefixes_to_remove = [
+                            "Based on my examination",
+                            "The medication",
+                            "This medication",
+                            "The drug class is",
+                            "The drug class for",
+                            "Drug class:",
+                            "Classification:",
+                            "Class:",
+                            "**",
+                        ]
 
-                    # Extract reasonable drug class
-                    if first_line and len(first_line) < 100:
-                        primary_class = (
-                            first_line.lower()
-                            .replace(" ", "_")
-                            .replace("*", "")
-                            .rstrip(".")
-                        )
-                        confidence = 0.6
+                        for prefix in prefixes_to_remove:
+                            if first_line.lower().startswith(prefix.lower()):
+                                first_line = first_line[len(prefix) :].strip()
+                                break
+
+                        # Extract reasonable drug class
+                        if first_line and len(first_line) < 100:
+                            primary_class = (
+                                first_line.lower()
+                                .replace(" ", "_")
+                                .replace("*", "")
+                                .rstrip(".")
+                            )
+                            confidence = 0.6
 
             return cls(
                 medication=medication,
                 primary_class=primary_class,
                 confidence=confidence,
-                reasoning=f"Claude CLI response: {response_text[:100]}",
+                reasoning=f"Claude CLI response: {response_text.strip()}",
             )
 
 

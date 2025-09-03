@@ -64,5 +64,8 @@ packages = ["src/med_aug"]
 
 [dependency-groups]
 dev = [
+    "pandas>=2.3.2",
     "pre-commit>=4.3.0",
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
 ]
