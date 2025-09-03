@@ -6,6 +6,7 @@ import json
 from enum import Enum
 
 from ..core.logging import get_logger, PerformanceLogger
+from ..core.mixins import DictMixin
 from .service import LLMService
 from ..diseases import disease_registry
 
@@ -22,7 +23,7 @@ class ClassificationConfidence(Enum):
 
 
 @dataclass
-class ClassificationResult:
+class ClassificationResult(DictMixin):
     """Result of medication classification."""
 
     medication: str
@@ -44,19 +45,7 @@ class ClassificationResult:
         else:
             return ClassificationConfidence.LOW
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "medication": self.medication,
-            "primary_class": self.primary_class,
-            "confidence": self.confidence,
-            "confidence_level": self.confidence_level.value,
-            "alternative_classes": self.alternative_classes,
-            "reasoning": self.reasoning,
-            "mechanism_of_action": self.mechanism_of_action,
-            "therapeutic_use": self.therapeutic_use,
-            "metadata": self.metadata,
-        }
+    # to_dict() method provided by DictMixin
 
     @classmethod
     def from_llm_response(
@@ -170,7 +159,7 @@ class ClassificationResult:
 
 
 @dataclass
-class BatchClassificationResult:
+class BatchClassificationResult(DictMixin):
     """Result of batch medication classification."""
 
     classifications: Dict[str, List[str]]  # drug_class -> medications
@@ -181,20 +170,21 @@ class BatchClassificationResult:
     individual_results: Dict[str, ClassificationResult] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "classifications": self.classifications,
-            "unclassified": self.unclassified,
-            "summary": {
-                "total": self.total,
-                "classified": self.classified_count,
-                "unclassified": len(self.unclassified),
-                "confidence": self.overall_confidence,
-            },
-            "individual_results": {
-                med: result.to_dict() for med, result in self.individual_results.items()
-            },
+        """Convert to dictionary with special handling for nested results."""
+        data = super().to_dict()
+        # Add computed summary and handle nested objects
+        data["summary"] = {
+            "total": self.total,
+            "classified": self.classified_count,
+            "unclassified": len(self.unclassified),
+            "confidence": self.overall_confidence,
         }
+        # Handle individual results with their own to_dict()
+        if self.individual_results:
+            data["individual_results"] = {
+                med: result.to_dict() for med, result in self.individual_results.items()
+            }
+        return data
 
 
 class MedicationClassifier:

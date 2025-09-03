@@ -8,6 +8,7 @@ import asyncio
 from enum import Enum
 
 from ..core.logging import get_logger
+from ..core.mixins import DictMixin
 
 logger = get_logger(__name__)
 
@@ -30,7 +31,7 @@ class LLMModel(Enum):
 
 
 @dataclass
-class LLMConfig:
+class LLMConfig(DictMixin):
     """Configuration for LLM providers."""
 
     model: LLMModel = LLMModel.CLAUDE_3_SONNET
@@ -44,20 +45,19 @@ class LLMConfig:
     extra_params: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "model": self.model.value,
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-            "timeout": self.timeout,
-            "retry_attempts": self.retry_attempts,
-            "retry_delay": self.retry_delay,
-            **self.extra_params,
-        }
+        """Convert to dictionary with sensitive data masked."""
+        data = super().to_dict()
+        # Mask sensitive data
+        if data.get("api_key"):
+            data["api_key"] = "***"
+        # Merge extra_params at top level
+        extra = data.pop("extra_params", {})
+        data.update(extra)
+        return data
 
 
 @dataclass
-class LLMResponse:
+class LLMResponse(DictMixin):
     """Response from an LLM provider."""
 
     content: str
@@ -67,13 +67,11 @@ class LLMResponse:
     raw_response: Optional[Any] = None
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "content": self.content,
-            "model": self.model,
-            "usage": self.usage,
-            "metadata": self.metadata,
-        }
+        """Convert to dictionary, excluding raw_response for cleaner output."""
+        data = super().to_dict()
+        # Remove raw_response as it's usually too verbose
+        data.pop("raw_response", None)
+        return data
 
 
 class LLMProvider(ABC):
@@ -285,7 +283,17 @@ class ClaudeCLIProvider(LLMProvider):
 
 
 class MockProvider(LLMProvider):
-    """Mock LLM provider for testing."""
+    """
+    Mock LLM provider for testing purposes only.
+    
+    This class provides deterministic responses for unit tests and development.
+    It should NOT be used in production environments.
+    
+    Used by:
+    - tests/unit/llm/test_classifier.py
+    - tests/unit/llm/test_service.py  
+    - tests/unit/llm/test_providers.py
+    """
 
     def __init__(self, config: Optional[LLMConfig] = None):
         """

@@ -7,6 +7,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 
 from ..core.logging import get_logger, PerformanceLogger
+from ..core.mixins import DictMixin
 
 logger = get_logger(__name__)
 perf_logger = PerformanceLogger(logger)
@@ -24,7 +25,7 @@ class PhaseStatus(Enum):
 
 
 @dataclass
-class PhaseResult:
+class PhaseResult(DictMixin):
     """Result from a pipeline phase execution."""
 
     phase_name: str
@@ -42,19 +43,7 @@ class PhaseResult:
         if self.end_time and self.start_time:
             self.duration_seconds = (self.end_time - self.start_time).total_seconds()
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary for serialization."""
-        return {
-            "phase_name": self.phase_name,
-            "status": self.status.value,
-            "start_time": self.start_time.isoformat(),
-            "end_time": self.end_time.isoformat() if self.end_time else None,
-            "duration_seconds": self.duration_seconds,
-            "output_data": self.output_data,
-            "error": self.error,
-            "metrics": self.metrics,
-            "artifacts": self.artifacts,
-        }
+    # to_dict() method provided by DictMixin
 
 
 class PipelinePhase(ABC):

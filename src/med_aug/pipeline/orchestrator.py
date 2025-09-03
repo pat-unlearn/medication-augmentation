@@ -21,6 +21,7 @@ from .phases import (
 from .checkpoint import CheckpointManager, PipelineCheckpoint
 from .progress import ProgressTracker, ProgressReport
 from ..core.logging import get_logger, PerformanceLogger, ErrorLogger
+from ..core.mixins import DictMixin
 
 logger = get_logger(__name__)
 perf_logger = PerformanceLogger(logger)
@@ -28,7 +29,7 @@ error_logger = ErrorLogger(logger)
 
 
 @dataclass
-class PipelineConfig:
+class PipelineConfig(DictMixin):
     """Configuration for pipeline execution."""
 
     input_file: str
@@ -51,26 +52,7 @@ class PipelineConfig:
     display_progress: bool = True
     progress_mode: str = "rich"  # rich, simple, none
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "input_file": self.input_file,
-            "output_path": self.output_path,
-            "disease_module": self.disease_module,
-            "confidence_threshold": self.confidence_threshold,
-            "enable_web_research": self.enable_web_research,
-            "enable_validation": self.enable_validation,
-            "enable_llm_classification": self.enable_llm_classification,
-            "llm_provider": self.llm_provider,
-            "enable_evaluation": self.enable_evaluation,
-            "enable_checkpoints": self.enable_checkpoints,
-            "checkpoint_interval": self.checkpoint_interval,
-            "max_retries": self.max_retries,
-            "retry_delay": self.retry_delay,
-            "parallel_phases": self.parallel_phases,
-            "display_progress": self.display_progress,
-            "progress_mode": self.progress_mode,
-        }
+    # to_dict() method provided by DictMixin
 
 
 class PipelineOrchestrator:

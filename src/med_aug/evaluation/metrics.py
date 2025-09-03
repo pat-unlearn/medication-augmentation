@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Set, Optional, Tuple, Any
 from collections import defaultdict, Counter
 import json
+from ..core.mixins import DictMixin
 
 
 @dataclass

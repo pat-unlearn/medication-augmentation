@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 import structlog
 
 from ..cache.base import BaseCache, CacheConfig
+from ...core.mixins import DictMixin
 from ..cache.memory_cache import MemoryCache
 from ..rate_limiter import DomainRateLimiter, RateLimitConfig, _domain_limiter
 
@@ -42,7 +43,7 @@ class ScraperConfig:
 
 
 @dataclass
-class ScraperResult:
+class ScraperResult(DictMixin):
     """Result from a web scraping operation."""
 
     success: bool
@@ -52,16 +53,7 @@ class ScraperResult:
     error: Optional[str] = None
     retry_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert result to dictionary."""
-        return {
-            "success": self.success,
-            "data": self.data,
-            "url": self.url,
-            "timestamp": self.timestamp.isoformat(),
-            "error": self.error,
-            "retry_count": self.retry_count,
-        }
+    # to_dict() method provided by DictMixin
 
 
 class BaseScraper(ABC):
@@ -209,6 +201,29 @@ class BaseScraper(ABC):
             BeautifulSoup object
         """
         return BeautifulSoup(html, "html.parser")
+
+    def rate_limit(self):
+        """Rate limiting context manager."""
+        class RateLimitContext:
+            def __init__(self, scraper):
+                self.scraper = scraper
+                
+            async def __aenter__(self):
+                # Apply rate limiting using the domain from config
+                domain = urlparse(self.scraper.config.base_url).netloc
+                if self.scraper.rate_config:
+                    await self.scraper.rate_limiter.acquire(domain, self.scraper.rate_config)
+                return self
+                
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                pass
+                
+        return RateLimitContext(self)
+
+    @property
+    def client(self):
+        """Get the HTTP client."""
+        return self._client
 
     @abstractmethod
     async def scrape_medication_info(self, medication_name: str) -> ScraperResult:

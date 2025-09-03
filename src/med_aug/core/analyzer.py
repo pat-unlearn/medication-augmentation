@@ -4,7 +4,6 @@ import re
 from typing import List, Dict, Any, Optional, Tuple
 from pathlib import Path
 import pandas as pd
-import polars as pl
 from dataclasses import dataclass, field
 from .models import ColumnAnalysisResult
 from .logging import get_logger, PerformanceLogger, LogContext

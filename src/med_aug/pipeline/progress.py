@@ -13,13 +13,14 @@ from rich.panel import Panel
 
 from .phases import PhaseStatus, PhaseResult
 from ..core.logging import get_logger
+from ..core.mixins import DictMixin
 
 logger = get_logger(__name__)
 console = Console()
 
 
 @dataclass
-class PhaseProgress:
+class PhaseProgress(DictMixin):
     """Progress information for a single phase."""
 
     name: str
@@ -57,7 +58,7 @@ class PhaseProgress:
 
 
 @dataclass
-class ProgressReport:
+class ProgressReport(DictMixin):
     """Overall progress report for pipeline."""
 
     pipeline_id: str
@@ -95,29 +96,7 @@ class ProgressReport:
         else:
             return "Pending"
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary."""
-        return {
-            "pipeline_id": self.pipeline_id,
-            "status": self.status,
-            "start_time": self.start_time.isoformat(),
-            "end_time": self.end_time.isoformat() if self.end_time else None,
-            "duration": str(self.duration),
-            "overall_progress": self.overall_progress,
-            "total_phases": self.total_phases,
-            "completed_phases": self.completed_phases,
-            "failed_phases": self.failed_phases,
-            "current_phase": self.current_phase,
-            "phases": {
-                name: {
-                    "status": p.status.value,
-                    "duration": p.duration_str,
-                    "error": p.error,
-                }
-                for name, p in self.phase_progress.items()
-            },
-            "metrics": self.metrics,
-        }
+    # to_dict() method provided by DictMixin
 
 
 class ProgressTracker:
@@ -317,18 +296,12 @@ class ProgressTracker:
         table = Table(title="Phase Status")
         table.add_column("Phase", style="cyan")
         table.add_column("Status", style="magenta")
-        table.add_column("Progress", style="green")
         table.add_column("Duration", style="yellow")
 
         for phase_name, progress in self.report.phase_progress.items():
             status_str = self._format_status(progress.status)
-            progress_str = (
-                f"{progress.progress_percent:.0f}%"
-                if progress.status == PhaseStatus.RUNNING
-                else "-"
-            )
 
-            table.add_row(phase_name, status_str, progress_str, progress.duration_str)
+            table.add_row(phase_name, status_str, progress.duration_str)
 
         layout.split_column(Layout(header, size=6), Layout(table))
 

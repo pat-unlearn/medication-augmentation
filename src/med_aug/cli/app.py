@@ -1,10 +1,10 @@
 """Main CLI application for medication augmentation system."""
 
 # Configure clean logging BEFORE any other imports
-import logging
 import structlog
 
 # Suppress noisy loggers for clean CLI output
+import logging
 logging.getLogger().setLevel(logging.ERROR)
 logging.getLogger("med_aug").setLevel(logging.ERROR)
 

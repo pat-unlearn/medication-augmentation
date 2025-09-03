@@ -5,7 +5,6 @@ from typing import List, Dict, Any, Optional, Set, Tuple
 from collections import Counter
 from pathlib import Path
 import pandas as pd
-import polars as pl
 from dataclasses import dataclass, field
 from datetime import datetime
 from .models import Medication, MedicationType

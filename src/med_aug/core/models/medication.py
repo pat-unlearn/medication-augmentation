@@ -5,6 +5,7 @@ from typing import List, Optional, Dict, Any
 from enum import Enum
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
+from ..mixins import DictMixin
 
 
 class MedicationType(str, Enum):
@@ -27,7 +28,7 @@ class ConfidenceLevel(str, Enum):
 
 
 @dataclass
-class Medication:
+class Medication(DictMixin):
     """Represents a single medication with metadata."""
 
     name: str
@@ -46,20 +47,11 @@ class Medication:
             return ConfidenceLevel.MEDIUM
         return ConfidenceLevel.LOW
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "name": self.name,
-            "type": self.type.value,
-            "confidence": self.confidence,
-            "source": self.source,
-            "metadata": self.metadata,
-            "discovered_at": self.discovered_at.isoformat(),
-        }
+    # to_dict() method provided by DictMixin
 
 
 @dataclass
-class DrugClass:
+class DrugClass(DictMixin):
     """Represents a drug class with associated medications."""
 
     name: str
@@ -92,7 +84,7 @@ class DrugClass:
 
 
 @dataclass
-class ColumnAnalysisResult:
+class ColumnAnalysisResult(DictMixin):
     """Result of analyzing a data column for medication content."""
 
     column: str
@@ -107,21 +99,11 @@ class ColumnAnalysisResult:
         """Check if column likely contains medications."""
         return self.confidence >= 0.7
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "column": self.column,
-            "confidence": self.confidence,
-            "total_count": self.total_count,
-            "unique_count": self.unique_count,
-            "sample_medications": self.sample_medications,
-            "reasoning": self.reasoning,
-            "is_likely": self.is_likely_medication_column,
-        }
+    # to_dict() method provided by DictMixin
 
 
 @dataclass
-class AugmentationResult:
+class AugmentationResult(DictMixin):
     """Result of medication augmentation process."""
 
     original_count: int
@@ -143,18 +125,11 @@ class AugmentationResult:
         return self.improvement_percentage > 0 and self.quality_score >= 0.7
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "original_count": self.original_count,
-            "augmented_count": self.augmented_count,
-            "medications_added": self.medications_added,
-            "new_medications": [med.to_dict() for med in self.new_medications],
-            "improvement_percentage": self.improvement_percentage,
-            "processing_time": self.processing_time,
-            "quality_score": self.quality_score,
-            "disease": self.disease,
-            "was_successful": self.was_successful,
-        }
+        """Convert to dictionary with special handling for nested objects."""
+        data = super().to_dict()
+        # Handle nested Medication objects manually
+        data["new_medications"] = [med.to_dict() for med in self.new_medications]
+        return data
 
 
 class MedicationClassification(BaseModel):

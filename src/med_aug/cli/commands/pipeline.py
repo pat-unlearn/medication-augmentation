@@ -147,7 +147,12 @@ def run_pipeline(
             if metrics:
                 console.print("\n[bold]Pipeline Metrics:[/bold]")
                 for key, value in metrics.items():
-                    console.print(f"  {key}: {value}")
+                    # Format floating point numbers to 4 decimal places
+                    if isinstance(value, float):
+                        formatted_value = f"{value:.4f}"
+                    else:
+                        formatted_value = str(value)
+                    console.print(f"  {key}: {formatted_value}")
 
             # Show artifacts
             artifacts = orchestrator.get_artifacts()
