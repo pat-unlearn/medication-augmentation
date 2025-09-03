@@ -2,7 +2,7 @@
 
 ## Overview
 
-The pipeline module orchestrates the NSCLC medication augmentation process to expand conmeds.yml files. It provides robust execution management with checkpointing, recovery, and progress tracking, focusing on generating production-ready YAML configuration files with comprehensive drug name coverage.
+The pipeline module orchestrates medication augmentation processes for any disease indication to expand conmeds.yml files. It provides robust, disease-agnostic execution management with checkpointing, recovery, and progress tracking, focusing on generating production-ready YAML configuration files with comprehensive drug name coverage across therapeutic areas.
 
 ## Structure
 
@@ -27,7 +27,7 @@ from med_aug.pipeline import PipelineOrchestrator, PipelineConfig
 config = PipelineConfig(
     input_file="data.csv",
     output_dir="./results",
-    disease_module="nsclc",
+    disease_module="nsclc",  # or "breast_cancer", "prostate_cancer", etc.
     enable_llm=True,
     enable_web_research=True,
     batch_size=100,
@@ -143,7 +143,7 @@ Configuration is handled through the PipelineConfig dataclass in the orchestrato
 class PipelineConfig:
     input_file: str
     output_path: str = "./output"
-    disease_module: str = "nsclc"
+    disease_module: str = "nsclc"  # Any disease: "nsclc", "breast_cancer", "prostate_cancer", etc.
     enable_llm_classification: bool = False
     llm_provider: str = "claude_cli"
     enable_web_research: bool = True
@@ -306,9 +306,15 @@ for phase, result in results.items():
 ## CLI Integration
 
 ```bash
-# Run full pipeline
+# Run full pipeline for any disease
 med-aug pipeline run data.csv \
   --disease nsclc \
+  --llm \
+  --output results/
+
+# Run for different diseases
+med-aug pipeline run data.csv \
+  --disease breast_cancer \
   --llm \
   --output results/
 
@@ -372,12 +378,12 @@ from med_aug.pipeline import BasePhase, PhaseResult
 class CustomPhase(BasePhase):
     def __init__(self, config: PipelineConfig):
         super().__init__("custom", config)
-    
+
     async def execute(self, input_data: Any) -> PhaseResult:
         try:
             # Phase implementation
             result = await self.process_data(input_data)
-            
+
             return PhaseResult(
                 phase_name="custom",
                 success=True,
@@ -491,10 +497,10 @@ import pytest
 async def test_extraction_phase():
     config = PipelineConfig(input_file="test.csv")
     phase = ExtractionPhase(config)
-    
+
     test_data = create_test_data()
     result = await phase.execute(test_data)
-    
+
     assert result.success
     assert len(result.data.medications) > 0
 ```
@@ -508,10 +514,10 @@ async def test_full_pipeline():
         output_dir="./test_output",
         disease_module="nsclc"
     )
-    
+
     orchestrator = PipelineOrchestrator(config)
     results = await orchestrator.run()
-    
+
     assert all(r.success for r in results.values())
 ```
 

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The output module provides essential export capabilities for the medication augmentation system, focusing on generating production-ready conmeds.yml files. The primary goal is to convert classification results into the YAML format required by the NSCLC pipeline.
+The output module provides essential export capabilities for the medication augmentation system, focusing on generating production-ready conmeds.yml files for any disease indication. The primary goal is to convert classification results into the YAML format required by clinical pipelines across therapeutic areas.
 
 ## Structure
 
@@ -40,10 +40,10 @@ output_file = exporter.export(
 
 #### Output Format
 
-The exporter generates YAML files compatible with the NSCLC pipeline:
+The exporter generates YAML files compatible with clinical pipelines for any disease:
 
 ```yaml
-# conmeds_augmented.yml
+# conmeds_augmented.yml - NSCLC example
 taking_pembrolizumab:
   - pembrolizumab
   - Keytruda
@@ -54,12 +54,16 @@ taking_osimertinib:
   - Tagrisso
   - AZD9291
 
-taking_paclitaxel:
-  - paclitaxel
-  - Abraxane
-  - Taxol
-  - nab-paclitaxel
-  - Paclitaxel Loaded Polymeric Micelle
+# conmeds_augmented.yml - Breast cancer example
+taking_trastuzumab:
+  - trastuzumab
+  - Herceptin
+  - trastuzumab-dkst
+
+taking_palbociclib:
+  - palbociclib
+  - Ibrance
+  - PD-0332991
 ```
 
 #### Drug Class Name Conversion
@@ -67,19 +71,13 @@ taking_paclitaxel:
 The exporter automatically converts drug class names to the conmeds format:
 
 ```python
-# Input: drug class names
-drug_classes = [
-    "PD-1 Inhibitors",
-    "EGFR Inhibitors",
-    "Taxane Chemotherapy"
-]
+# Input: drug class names (works for any disease)
+nsclc_classes = ["PD-1 Inhibitors", "EGFR Inhibitors", "Taxane Chemotherapy"]
+breast_classes = ["HER2-Targeted Therapy", "CDK4/6 Inhibitors", "Hormone Therapy"]
 
 # Output: conmeds keys
-conmeds_keys = [
-    "taking_pd1_inhibitors",
-    "taking_egfr_inhibitors",
-    "taking_taxane_chemotherapy"
-]
+nsclc_keys = ["taking_pd1_inhibitors", "taking_egfr_inhibitors", "taking_taxane_chemotherapy"]
+breast_keys = ["taking_her2_targeted_therapy", "taking_cdk46_inhibitors", "taking_hormone_therapy"]
 ```
 
 ### Additional Exporters
@@ -318,6 +316,7 @@ from med_aug.pipeline import PipelineConfig
 config = PipelineConfig(
     input_file="data.csv",
     output_path="./output",
+    disease_module="nsclc",  # or any disease module
     # Export settings handled automatically
     # Focus on conmeds.yml generation
 )
@@ -325,12 +324,13 @@ config = PipelineConfig(
 
 ## Success Metrics
 
-The output module supports the PRD success criteria:
+The output module supports multi-disease success criteria:
 
-- **Primary Deliverable**: conmeds_augmented.yml with expanded drug name coverage
-- **Coverage Expansion**: 54 → 70+ drug classes with 20-50+ names each
-- **Quality Tracking**: Classification confidence and validation results
-- **Format Compatibility**: Direct integration with existing NSCLC pipeline
+- **Primary Deliverable**: conmeds_augmented.yml with expanded drug name coverage for any disease
+- **Coverage Expansion**: Significant increase in drug classes with 20-50+ names each per disease
+- **Quality Tracking**: Classification confidence and validation results across therapeutic areas
+- **Format Compatibility**: Direct integration with existing clinical pipelines for any disease
+- **Scalability**: Consistent format enables rapid deployment to new therapeutic areas
 
 ## File Structure
 
@@ -408,14 +408,15 @@ def test_conmeds_yaml_export():
 The output module connects with:
 
 - **Pipeline Phases**: Receives classification results from LLM and validation phases
-- **NSCLC Module**: Uses drug class definitions for proper naming
+- **Disease Modules**: Uses disease-specific drug class definitions for proper naming
 - **CLI Commands**: Automatically generates exports during pipeline runs
-- **External Systems**: Produces files compatible with existing NSCLC pipeline
+- **External Systems**: Produces files compatible with existing clinical pipelines for any disease
 
 ## Future Enhancements
 
-- **Validation Integration**: Automatic conmeds.yml validation against existing pipeline
-- **Diff Reports**: Compare before/after medication coverage
-- **Merge Capabilities**: Combine with existing conmeds.yml files
-- **Format Validation**: Ensure output meets pipeline requirements
-- **Version Control**: Track changes and augmentation history
+- **Cross-Disease Validation**: Automatic conmeds.yml validation across therapeutic areas
+- **Disease-Specific Diff Reports**: Compare before/after medication coverage per disease
+- **Multi-Disease Merge**: Combine conmeds.yml files from multiple disease modules
+- **Format Validation**: Ensure output meets pipeline requirements for any disease
+- **Cross-Therapeutic Insights**: Identify medications used across multiple diseases
+- **Version Control**: Track changes and augmentation history per disease module

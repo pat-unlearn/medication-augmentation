@@ -24,7 +24,10 @@ def run_pipeline(
         None, "--output", "-o", help="Output directory"
     ),
     disease: str = typer.Option(
-        "nsclc", "--disease", "-d", help="Disease module to use"
+        "nsclc",
+        "--disease",
+        "-d",
+        help="Disease module to use (nsclc, breast_cancer, etc.)",
     ),
     confidence: float = typer.Option(
         0.5, "--confidence", "-c", help="Confidence threshold"
@@ -50,7 +53,7 @@ def run_pipeline(
         None, "--id", help="Pipeline ID for resume"
     ),
 ):
-    """Run the medication augmentation pipeline."""
+    """Run the medication augmentation pipeline for any disease indication."""
 
     # Validate input file
     if not input_file.exists():
@@ -343,7 +346,7 @@ def extract_medications(
         extractor = MedicationExtractor()
         result = extractor.extract_from_series(df[column], column)
 
-        console.print(f"\n[bold]Extraction Results:[/bold]")
+        console.print("\n[bold]Extraction Results:[/bold]")
         console.print(f"Total rows: {result.total_rows}")
         console.print(f"Unique medications: {result.unique_medications}")
 

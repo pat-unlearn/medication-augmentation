@@ -14,7 +14,7 @@ app = typer.Typer()
 
 @app.command("list")
 def list_diseases() -> None:
-    """List all available disease modules."""
+    """List all available disease modules (nsclc, breast_cancer, etc.)."""
 
     available_diseases = disease_registry.list_available()
 
@@ -23,7 +23,9 @@ def list_diseases() -> None:
         console.print(
             "\nTip: Disease modules are auto-discovered from the diseases package."
         )
-        console.print("Make sure NSCLC module is properly installed.")
+        console.print(
+            "Make sure disease modules are properly installed (NSCLC, breast cancer, etc.)."
+        )
         return
 
     table = Table(title="🔬 Available Disease Modules")
@@ -54,7 +56,7 @@ def list_diseases() -> None:
 
 @app.command("info")
 def disease_info(
-    disease: str = typer.Argument(..., help="Disease module code (e.g., nsclc)")
+    disease: str = typer.Argument(..., help="Disease module code (e.g., nsclc)"),
 ) -> None:
     """Show detailed information about a disease module."""
 
@@ -162,7 +164,7 @@ def show_keywords(
 
 @app.command("validate")
 def validate_module(
-    disease: str = typer.Argument(..., help="Disease module code to validate")
+    disease: str = typer.Argument(..., help="Disease module code to validate"),
 ) -> None:
     """Validate a disease module configuration."""
 
@@ -220,7 +222,7 @@ def validate_module(
         console.print("[green]Perfect! Module is fully configured.[/green]")
 
     # Summary
-    console.print(f"\n[bold]Summary:[/bold]")
+    console.print("\n[bold]Summary:[/bold]")
     console.print(f"  • Drug classes: {len(module.drug_classes)}")
     console.print(f"  • Total keywords: {len(module.get_all_keywords())}")
     console.print(f"  • Web sources: {len(module.get_web_sources())}")
