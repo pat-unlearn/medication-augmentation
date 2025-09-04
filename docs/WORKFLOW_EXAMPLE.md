@@ -1,6 +1,6 @@
-# Complete End-to-End Workflow Example
+# 🔬 Complete End-to-End Workflow Example
 
-This document demonstrates a real-world example of how the Medication Augmentation System processes clinical data to expand conmeds.yml files with comprehensive medication name coverage.
+This document demonstrates a real-world example of how the Medication Augmentation System processes clinical data to expand `conmeds.yml` files with comprehensive medication name coverage using the `med-aug` CLI.
 
 ## 🎯 Overview
 
@@ -60,12 +60,22 @@ PT010,"AZD3759 200mg daily",PD,3
 
 ### **Command:**
 ```bash
-python -m src.med_aug.cli.app pipeline run \
-  --input nsclc_patients.csv \
+# Activate virtual environment first
+source .venv/bin/activate
+
+# Run the complete pipeline with NSCLC disease module
+med-aug pipeline run nsclc_patients.csv \
+  --conmeds data/conmeds_defaults.yml \
   --disease nsclc \
-  --enable-llm \
-  --evaluate \
   --output ./results
+
+# Alternative: Specify all options explicitly
+med-aug pipeline run nsclc_patients.csv \
+  --conmeds data/conmeds_defaults.yml \
+  --disease nsclc \
+  --output ./results \
+  --enable-web-research \
+  --enable-evaluation
 ```
 
 ---
@@ -340,10 +350,91 @@ taking_pemetrexed: [pemetrexed, pemetrexed disodium, Alimta, Ciambra, Pemfexy, P
 3. **Monitor Impact**: Track improvement in medication matching rates
 4. **Schedule Regular Updates**: Run pipeline quarterly with new clinical data
 
+```bash
+# Deploy the augmented configuration
+cp results/conmeds_augmented.yml data/conmeds_defaults.yml
+
+# Run pipeline validation to ensure quality
+med-aug diseases validate nsclc
+```
+
 ### **For Other Diseases:**
 1. **Create Disease Module**: Define drug classes for target therapeutic area
 2. **Gather Clinical Data**: Collect medication datasets for that disease
 3. **Run Same Pipeline**: Use identical workflow with different disease parameter
 4. **Generate Augmented conmeds**: Expand coverage for new therapeutic area
+
+```bash
+# Example: Run for breast cancer (when module exists)
+med-aug pipeline run breast_cancer_data.csv \
+  --conmeds data/conmeds_defaults.yml \
+  --disease breast_cancer \
+  --output ./breast_cancer_results
+
+# List all available disease modules
+med-aug diseases list
+
+# Get details about a specific disease module
+med-aug diseases show nsclc
+```
+
+---
+
+## 🛠️ Troubleshooting & Advanced Usage
+
+### **Resume Failed Pipeline**
+```bash
+# Resume from a specific phase if pipeline fails
+med-aug pipeline run nsclc_patients.csv \
+  --conmeds data/conmeds_defaults.yml \
+  --disease nsclc \
+  --output ./results \
+  --resume-from llm_classification
+
+# Check pipeline status and progress
+med-aug pipeline status ./results
+```
+
+### **Disable Specific Features**
+```bash
+# Run without LLM classification (not recommended)
+med-aug pipeline run nsclc_patients.csv \
+  --conmeds data/conmeds_defaults.yml \
+  --disease nsclc \
+  --output ./results \
+  --no-llm
+
+# Run without web research (faster, less comprehensive)
+med-aug pipeline run nsclc_patients.csv \
+  --conmeds data/conmeds_defaults.yml \
+  --disease nsclc \
+  --output ./results \
+  --no-web-research
+```
+
+### **Batch Processing Multiple Files**
+```bash
+# Process multiple datasets sequentially
+for dataset in nsclc_*.csv; do
+  med-aug pipeline run "$dataset" \
+    --conmeds data/conmeds_defaults.yml \
+    --disease nsclc \
+    --output "./results/$(basename "$dataset" .csv)"
+done
+```
+
+### **Quality Assurance Commands**
+```bash
+# Validate disease module configuration
+med-aug diseases validate nsclc
+
+# Check system configuration
+med-aug info
+
+# Verify Claude CLI availability
+med-aug llm test
+```
+
+---
 
 This workflow demonstrates how the Medication Augmentation System transforms manual, time-intensive curation into an intelligent, automated process that enhances rather than replaces clinical expertise.
