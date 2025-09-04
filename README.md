@@ -363,20 +363,12 @@ claude --version
 4. Ensure code quality (`black`, `ruff`, `mypy`)
 5. Submit a pull request
 
-## 📄 License
-
-[License information]
-
 ## 💬 Support
 
 For issues and questions:
 - Create Jira issues for bugs and feature requests
 - Review documentation in each directory
 - Check troubleshooting section above
-
----
-
-**Status**: ✅ Production-ready multi-disease medication augmentation framework focused on expanding conmeds.yml with comprehensive drug name coverage across therapeutic areas.
 
 ## 🩺 Adding New Disease Modules
 
@@ -387,4 +379,4 @@ The system is designed for easy extension to new diseases:
 3. **Test with Pipeline**: Run the existing pipeline with `--disease your_disease`
 4. **No Code Changes**: The core pipeline automatically adapts to new disease modules
 
-See the [Disease Module Development Guide](src/med_aug/diseases/README.md) for detailed instructions.
+See the [Disease Module Development Guide](docs/BUILDING_DISEASE_MODULES.md) for detailed instructions.
