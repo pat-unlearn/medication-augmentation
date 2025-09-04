@@ -2,11 +2,11 @@
 
 ## Executive Summary
 
-**Project**: Disease-Agnostic Medication Augmentation System  
-**Goal**: Intelligent expansion of medication databases for clinical research  
-**First Use Case**: Non-Small Cell Lung Cancer (NSCLC)  
-**Architecture**: Plugin-based, extensible to any therapeutic area  
-**Technology Stack**: Modern Python with Rich CLI and Typer framework  
+**Project**: Disease-Agnostic Medication Augmentation System
+**Goal**: Intelligent expansion of medication databases for clinical research
+**First Use Case**: Non-Small Cell Lung Cancer (NSCLC)
+**Architecture**: Plugin-based, extensible to any therapeutic area
+**Technology Stack**: Modern Python with Rich CLI and Typer framework
 
 ### Vision
 Build a production-ready system that automatically discovers, classifies, and augments medication databases by expanding from limited examples (54 drug classes with 2-10 names each) to comprehensive coverage (70+ drug classes with 20-50+ names each). The system must be extensible to any disease indication while providing a modern, beautiful CLI experience.
@@ -16,7 +16,7 @@ Build a production-ready system that automatically discovers, classifies, and au
 ### Core Principles
 1. **Disease-Agnostic Core**: Shared components work across all therapeutic areas
 2. **Plugin Architecture**: Each disease is a separate module with custom logic
-3. **Modern CLI**: Rich + Typer for beautiful, interactive user experience  
+3. **Modern CLI**: Rich + Typer for beautiful, interactive user experience
 4. **Async Processing**: Parallel web scraping and LLM calls for performance
 5. **Intelligent Classification**: LLM-powered with disease-specific context
 6. **Quality Assurance**: Built-in validation and human review workflows
@@ -97,25 +97,25 @@ dependencies = [
     "typer[all]>=0.9.0",      # Modern CLI framework with completion
     "rich>=13.7.0",           # Beautiful terminal output
     "click-completion>=0.5.2", # Shell completions
-    
+
     # Data Processing
     "pandas>=2.0.0",          # DataFrame operations
     "polars>=0.20.0",         # Fast dataframe operations
     "pydantic>=2.5.0",        # Data validation and settings
-    
+
     # Web Scraping & HTTP
     "httpx>=0.25.0",          # Async HTTP client
     "beautifulsoup4>=4.12.0", # HTML parsing
     "playwright>=1.40.0",     # Browser automation (if needed)
-    
+
     # LLM Integration
     "openai>=1.0.0",          # OpenAI API
     "anthropic>=0.18.0",      # Anthropic API
-    
+
     # Caching & Storage
     "redis>=5.0.0",           # Redis caching
     "diskcache>=5.6.0",       # Disk-based caching
-    
+
     # Configuration & Utilities
     "pyyaml>=6.0.0",          # YAML configuration
     "python-dotenv>=1.0.0",   # Environment variables
@@ -177,35 +177,35 @@ class DrugClassConfig:
 
 class DiseaseModule(ABC):
     """Abstract base class for all disease modules."""
-    
+
     @property
     @abstractmethod
     def name(self) -> str:
         """Disease identifier (e.g., 'nsclc', 'prostate')"""
         pass
-    
+
     @property
     @abstractmethod
     def display_name(self) -> str:
         """Human-readable disease name"""
         pass
-    
+
     @property
     @abstractmethod
     def drug_classes(self) -> List[DrugClassConfig]:
         """Disease-specific drug class configurations"""
         pass
-    
+
     @abstractmethod
     def get_web_sources(self) -> List[str]:
         """Disease-specific data sources for web scraping"""
         pass
-    
+
     @abstractmethod
     def get_llm_context(self) -> str:
         """Disease-specific context for LLM classification"""
         pass
-    
+
     @abstractmethod
     def validate_medication(self, medication: str, drug_class: str) -> bool:
         """Disease-specific medication validation"""
@@ -222,11 +222,11 @@ from .base import DiseaseModule
 
 class DiseaseRegistry:
     """Registry for disease modules with auto-discovery."""
-    
+
     def __init__(self):
         self._modules: Dict[str, Type[DiseaseModule]] = {}
         self._discover_modules()
-    
+
     def _discover_modules(self):
         """Auto-discover disease modules in the diseases package."""
         for _, module_name, _ in pkgutil.iter_modules(__path__):
@@ -241,13 +241,13 @@ class DiseaseRegistry:
                 except ImportError as e:
                     # Log error but continue discovery
                     pass
-    
+
     def get_module(self, name: str) -> Optional[DiseaseModule]:
         """Get disease module instance by name."""
         if name in self._modules:
             return self._modules[name]()
         return None
-    
+
     def list_available(self) -> List[str]:
         """List all available disease modules."""
         return list(self._modules.keys())
@@ -285,7 +285,7 @@ class Medication:
     source: str
     metadata: Dict[str, Any]
     discovered_at: datetime
-    
+
     @property
     def confidence_level(self) -> ConfidenceLevel:
         if self.confidence >= 0.9:
@@ -293,7 +293,7 @@ class Medication:
         elif self.confidence >= 0.7:
             return ConfidenceLevel.MEDIUM
         return ConfidenceLevel.LOW
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "name": self.name,
@@ -311,7 +311,7 @@ class DrugClass:
     current_medications: List[Medication]
     category: str  # "chemotherapy", "immunotherapy", etc.
     disease: str
-    
+
     def add_medication(self, medication: Medication) -> 'DrugClass':
         """Add medication (immutable update)."""
         return DrugClass(
@@ -321,12 +321,12 @@ class DrugClass:
             category=self.category,
             disease=self.disease
         )
-    
+
     def get_medication_names(self) -> List[str]:
         """Get list of medication names."""
         return [med.name for med in self.current_medications]
 
-@dataclass  
+@dataclass
 class ColumnAnalysisResult:
     column: str
     confidence: float
@@ -356,26 +356,26 @@ from .models import ColumnAnalysisResult
 
 class DataAnalyzer:
     """Analyze datasets to identify medication columns."""
-    
+
     MEDICATION_PATTERNS = [
         r'\b[A-Z][a-z]+mab\b',      # Monoclonal antibodies
-        r'\b[A-Z][a-z]*nib\b',      # Kinase inhibitors  
+        r'\b[A-Z][a-z]*nib\b',      # Kinase inhibitors
         r'\b[A-Z][a-z]*tin\b',      # Statins and related
         r'\bPLATINUM|PLATIN\b',     # Platinum compounds
         r'\bTAXEL|TAXANE\b',        # Taxanes
     ]
-    
+
     MEDICATION_KEYWORDS = [
         'drug', 'medication', 'agent', 'therapy', 'treatment',
         'chemo', 'immuno', 'targeted', 'hormone', 'biological'
     ]
-    
-    def analyze_columns(self, 
-                       file_path: str, 
+
+    def analyze_columns(self,
+                       file_path: str,
                        sample_size: int = 1000,
                        confidence_threshold: float = 0.7) -> List[ColumnAnalysisResult]:
         """Analyze dataset columns to identify medication columns."""
-        
+
         # Read sample of data
         if file_path.endswith('.csv'):
             df = pd.read_csv(file_path, nrows=sample_size)
@@ -383,21 +383,21 @@ class DataAnalyzer:
             df = pd.read_csv(file_path, sep='\t', nrows=sample_size)
         else:
             raise ValueError(f"Unsupported file format: {file_path}")
-        
+
         results = []
-        
+
         for column in df.columns:
             if df[column].dtype == 'object':  # String columns only
                 result = self._analyze_column(df[column], column)
                 if result.confidence >= confidence_threshold:
                     results.append(result)
-        
+
         # Sort by confidence descending
         return sorted(results, key=lambda x: x.confidence, reverse=True)
-    
+
     def _analyze_column(self, series: pd.Series, column_name: str) -> ColumnAnalysisResult:
         """Analyze a single column for medication content."""
-        
+
         # Remove null values
         non_null = series.dropna()
         if len(non_null) == 0:
@@ -409,34 +409,34 @@ class DataAnalyzer:
                 sample_medications=[],
                 reasoning="Column contains no non-null values"
             )
-        
+
         # Convert to strings and get unique values
         str_values = non_null.astype(str).str.strip()
         unique_values = str_values.unique()
-        
+
         # Calculate confidence score
         confidence_score = 0.0
         reasoning_parts = []
-        
+
         # Column name scoring (30% weight)
         name_score = self._score_column_name(column_name)
         confidence_score += name_score * 0.3
         reasoning_parts.append(f"Column name score: {name_score:.2f}")
-        
+
         # Pattern matching scoring (40% weight)
         pattern_score = self._score_patterns(unique_values)
         confidence_score += pattern_score * 0.4
         reasoning_parts.append(f"Pattern match score: {pattern_score:.2f}")
-        
+
         # Statistical scoring (30% weight)
         stats_score = self._score_statistics(str_values)
         confidence_score += stats_score * 0.3
         reasoning_parts.append(f"Statistical score: {stats_score:.2f}")
-        
+
         # Get sample medications for preview
-        sample_meds = [val for val in unique_values[:10] 
+        sample_meds = [val for val in unique_values[:10]
                       if self._looks_like_medication(val)]
-        
+
         return ColumnAnalysisResult(
             column=column_name,
             confidence=min(confidence_score, 1.0),
@@ -445,12 +445,12 @@ class DataAnalyzer:
             sample_medications=sample_meds,
             reasoning="; ".join(reasoning_parts)
         )
-    
+
     def _score_column_name(self, column_name: str) -> float:
         """Score column name for medication-related keywords."""
         name_lower = column_name.lower()
         score = 0.0
-        
+
         # Exact matches
         if name_lower in ['agent', 'medication', 'drug', 'drugdtxt']:
             score += 1.0
@@ -458,66 +458,66 @@ class DataAnalyzer:
             score += 0.7
         elif any(word in name_lower for word in ['name', 'text', 'desc']):
             score += 0.3
-        
+
         return min(score, 1.0)
-    
+
     def _score_patterns(self, values: List[str]) -> float:
         """Score based on medication naming patterns."""
         if len(values) == 0:
             return 0.0
-        
+
         pattern_matches = 0
         for value in values[:100]:  # Sample first 100
             if self._looks_like_medication(value):
                 pattern_matches += 1
-        
+
         return pattern_matches / min(len(values), 100)
-    
+
     def _looks_like_medication(self, value: str) -> bool:
         """Check if a value looks like a medication name."""
         if not value or len(value.strip()) < 3:
             return False
-        
+
         value = value.strip()
-        
+
         # Check against patterns
         for pattern in self.MEDICATION_PATTERNS:
             if re.search(pattern, value, re.IGNORECASE):
                 return True
-        
+
         # Check for common medication indicators
         med_indicators = [
-            'mab', 'nib', 'tin', 'pril', 'sartan', 'olol', 'zole', 
+            'mab', 'nib', 'tin', 'pril', 'sartan', 'olol', 'zole',
             'platin', 'taxel', 'rubicin', 'mycin', 'cillin'
         ]
-        
+
         return any(indicator in value.lower() for indicator in med_indicators)
-    
+
     def _score_statistics(self, series: pd.Series) -> float:
         """Score based on statistical properties."""
         score = 0.0
-        
+
         # Diversity score (more unique values = more likely medications)
         unique_ratio = series.nunique() / len(series)
         if unique_ratio > 0.5:
             score += 0.3
         elif unique_ratio > 0.2:
             score += 0.2
-        
+
         # Average length score (medications typically 6-20 characters)
         avg_length = series.str.len().mean()
         if 6 <= avg_length <= 20:
             score += 0.3
         elif 4 <= avg_length <= 25:
             score += 0.2
-        
+
         # Alphanumeric ratio (medications usually have letters)
         alphanumeric_ratio = series.str.contains(r'[A-Za-z]').mean()
         if alphanumeric_ratio > 0.8:
             score += 0.4
         elif alphanumeric_ratio > 0.5:
             score += 0.2
-        
+
         return min(score, 1.0)
 ```
 
@@ -551,7 +551,7 @@ app = typer.Typer(
 
 # Add command groups
 app.add_typer(diseases.app, name="diseases", help="🔬 Manage disease modules")
-app.add_typer(analyze.app, name="analyze", help="🔍 Analyze datasets")  
+app.add_typer(analyze.app, name="analyze", help="🔍 Analyze datasets")
 app.add_typer(extract.app, name="extract", help="📋 Extract medications")
 app.add_typer(augment.app, name="augment", help="⚡ Augment databases")
 app.add_typer(validate.app, name="validate", help="✅ Validate results")
@@ -565,24 +565,24 @@ def main(
 ) -> None:
     """
     🏥 Medication Augmentation System
-    
+
     Intelligent medication discovery and classification system for clinical research.
     Automatically expands medication databases with comprehensive drug names and classifications.
     """
-    
+
     if version:
         console.print("🏥 Medication Augmentation System v1.0.0", style="bold blue")
         raise typer.Exit()
-    
+
     # Display welcome banner
     if ctx.invoked_subcommand is None:
         _display_welcome()
 
 def _display_welcome():
     """Display welcome banner with system information."""
-    
+
     title = Text("Medication Augmentation System", style="bold blue")
-    
+
     content = Text()
     content.append("🎯 ", style="bold yellow")
     content.append("Intelligent medication discovery for clinical research\n")
@@ -593,14 +593,14 @@ def _display_welcome():
     content.append("🚀 ", style="bold magenta")
     content.append("Get started: ", style="bold")
     content.append("med-aug pipeline --help", style="cyan")
-    
+
     panel = Panel(
         content,
         title="Welcome",
         border_style="blue",
         padding=(1, 2)
     )
-    
+
     console.print(panel)
 
 if __name__ == "__main__":
@@ -624,19 +624,19 @@ app = typer.Typer()
 @app.command("list")
 def list_diseases() -> None:
     """List all available disease modules."""
-    
+
     available_diseases = disease_registry.list_available()
-    
+
     if not available_diseases:
         console.print("❌ No disease modules found", style="red")
         return
-    
+
     table = Table(title="🔬 Available Disease Modules")
     table.add_column("Code", style="cyan", no_wrap=True)
     table.add_column("Name", style="yellow")
     table.add_column("Drug Classes", justify="right", style="green")
     table.add_column("Status", justify="center")
-    
+
     for disease_code in available_diseases:
         try:
             module = disease_registry.get_module(disease_code)
@@ -646,7 +646,7 @@ def list_diseases() -> None:
             else:
                 status = "❌ Error"
                 drug_count = 0
-                
+
             table.add_row(
                 disease_code,
                 module.display_name if module else "Unknown",
@@ -655,7 +655,7 @@ def list_diseases() -> None:
             )
         except Exception:
             table.add_row(disease_code, "Error loading", "0", "❌ Error")
-    
+
     console.print(table)
 
 @app.command("info")
@@ -663,7 +663,7 @@ def disease_info(
     disease: str = typer.Argument(..., help="Disease module code")
 ) -> None:
     """Show detailed information about a disease module."""
-    
+
     module = disease_registry.get_module(disease)
     if not module:
         console.print(f"❌ Disease module '{disease}' not found", style="red")
@@ -671,7 +671,7 @@ def disease_info(
         if available:
             console.print(f"Available: {', '.join(available)}")
         raise typer.Exit(1)
-    
+
     # Disease info panel
     info_content = f"""
 🔬 [bold]{module.display_name}[/bold]
@@ -679,32 +679,32 @@ def disease_info(
 🎯 Drug Classes: {len(module.drug_classes)}
 🌐 Web Sources: {len(module.get_web_sources())}
 """
-    
+
     info_panel = Panel(
         info_content.strip(),
         title="Disease Information",
         border_style="blue"
     )
     console.print(info_panel)
-    
+
     # Drug classes table
     if module.drug_classes:
         drug_table = Table(title="Drug Classes")
         drug_table.add_column("Class", style="cyan")
         drug_table.add_column("Keywords", style="yellow")
         drug_table.add_column("Threshold", justify="right", style="green")
-        
+
         for drug_class in module.drug_classes:
             keywords_str = ", ".join(drug_class.keywords[:3])
             if len(drug_class.keywords) > 3:
                 keywords_str += "..."
-            
+
             drug_table.add_row(
                 drug_class.name,
                 keywords_str,
                 f"{drug_class.confidence_threshold:.1%}"
             )
-        
+
         console.print(drug_table)
 
 @app.command("create")
@@ -714,7 +714,7 @@ def create_disease_template(
     output_dir: Optional[str] = typer.Option(None, "--output", help="Output directory")
 ) -> None:
     """Create a new disease module template."""
-    
+
     # Implementation for creating disease module templates
     console.print(f"🔬 Creating disease module template for '{name}'...")
     console.print("📝 This would generate the module files and configuration")
@@ -723,7 +723,7 @@ def create_disease_template(
 
 ### Beautiful Pipeline Command
 ```python
-# src/med_aug/cli/commands/pipeline.py  
+# src/med_aug/cli/commands/pipeline.py
 import typer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn, TimeRemainingColumn
@@ -741,7 +741,7 @@ from ...core.extractor import MedicationExtractor
 console = Console()
 app = typer.Typer()
 
-@app.command("run") 
+@app.command("run")
 def run_pipeline(
     disease: str = typer.Argument(..., help="Disease module (e.g., nsclc, prostate)"),
     input_file: Path = typer.Argument(..., help="Input data file", exists=True),
@@ -754,16 +754,16 @@ def run_pipeline(
 ) -> None:
     """
     🚀 Run the complete medication augmentation pipeline.
-    
+
     Executes the full workflow from data analysis to conmeds.yml augmentation
     with beautiful progress tracking and interactive validation.
-    
+
     Examples:
         med-aug pipeline run nsclc data.csv conmeds.yml
         med-aug pipeline run nsclc data.csv conmeds.yml --column AGENT --dry-run
         med-aug pipeline run prostate data.csv conmeds.yml --skip-research
     """
-    
+
     # Validate disease module
     module = disease_registry.get_module(disease)
     if not module:
@@ -771,22 +771,22 @@ def run_pipeline(
         available = disease_registry.list_available()
         console.print(f"Available: {', '.join(available)}")
         raise typer.Exit(1)
-    
+
     output_file = output_file or Path(f"conmeds_{disease}_augmented.yml")
-    
+
     # Display pipeline header
     _display_pipeline_header(disease, module, input_file, conmeds_file, output_file, dry_run)
-    
+
     # Run pipeline with rich progress tracking
     asyncio.run(_run_pipeline_async(
-        module, input_file, conmeds_file, output_file, 
+        module, input_file, conmeds_file, output_file,
         column, dry_run, skip_research, auto_approve
     ))
 
-def _display_pipeline_header(disease: str, module, input_file: Path, 
+def _display_pipeline_header(disease: str, module, input_file: Path,
                            conmeds_file: Path, output_file: Path, dry_run: bool):
     """Display beautiful pipeline header."""
-    
+
     header_text = f"""
 🏥 [bold blue]Medication Augmentation Pipeline[/bold blue]
 
@@ -795,10 +795,10 @@ def _display_pipeline_header(disease: str, module, input_file: Path,
 📋 [bold]Current:[/bold] {conmeds_file.name}
 💾 [bold]Output:[/bold] {output_file.name}
 """
-    
+
     if dry_run:
         header_text += "\n🧪 [bold yellow]DRY RUN MODE - No files will be modified[/bold yellow]"
-    
+
     panel = Panel(
         header_text.strip(),
         border_style="blue",
@@ -806,13 +806,13 @@ def _display_pipeline_header(disease: str, module, input_file: Path,
     )
     console.print(panel)
 
-async def _run_pipeline_async(module, input_file: Path, conmeds_file: Path, 
-                            output_file: Path, column: Optional[str], 
+async def _run_pipeline_async(module, input_file: Path, conmeds_file: Path,
+                            output_file: Path, column: Optional[str],
                             dry_run: bool, skip_research: bool, auto_approve: bool):
     """Run the async pipeline with progress tracking."""
-    
+
     pipeline_state = {}
-    
+
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -822,102 +822,102 @@ async def _run_pipeline_async(module, input_file: Path, conmeds_file: Path,
         console=console,
         expand=True
     ) as progress:
-        
+
         try:
             # Phase 1: Column Analysis
             analyze_task = progress.add_task("🔍 Analyzing columns...", total=100)
             analyzer = DataAnalyzer()
-            
+
             for i in range(100):
                 await asyncio.sleep(0.01)  # Simulate work
                 progress.update(analyze_task, advance=1)
-            
+
             column_results = analyzer.analyze_columns(str(input_file))
             pipeline_state['column_analysis'] = column_results
-            
+
             if column_results:
                 selected_column = column or column_results[0].column
                 console.print(f"✅ Column analysis complete: [bold]{selected_column}[/bold]")
             else:
                 console.print("❌ No medication columns detected", style="red")
                 raise typer.Exit(1)
-            
+
             # Phase 2: Medication Extraction
             extract_task = progress.add_task("📋 Extracting medications...", total=100)
             extractor = MedicationExtractor()
-            
+
             for i in range(100):
                 await asyncio.sleep(0.01)  # Simulate work
                 progress.update(extract_task, advance=1)
-            
+
             # Simulate extraction results
             medications = {'medications': ['drug1', 'drug2'], 'count': 150}
             pipeline_state['medications'] = medications
             console.print(f"✅ Extracted [bold]{medications['count']}[/bold] unique medications")
-            
+
             # Phase 3: Web Research (if not skipped)
             if not skip_research:
                 research_task = progress.add_task("🌐 Researching medications...", total=100)
-                
+
                 for i in range(100):
                     await asyncio.sleep(0.02)  # Simulate slower web requests
                     progress.update(research_task, advance=1)
-                
+
                 research_data = {'researched': 120, 'enhanced': 95}
                 pipeline_state['research'] = research_data
                 console.print(f"✅ Research complete: [bold]{research_data['enhanced']}[/bold] medications enhanced")
-            
+
             # Phase 4: LLM Classification
             classify_task = progress.add_task("🤖 Classifying medications...", total=100)
-            
+
             for i in range(100):
                 await asyncio.sleep(0.03)  # Simulate LLM calls
                 progress.update(classify_task, advance=1)
-            
+
             classifications = {'classified': 145, 'high_confidence': 120, 'needs_review': 25}
             pipeline_state['classifications'] = classifications
             console.print(f"✅ Classification complete: [bold]{classifications['high_confidence']}[/bold] high-confidence classifications")
-            
+
             # Phase 5: Validation & Output
             output_task = progress.add_task("📄 Generating output...", total=100)
-            
+
             for i in range(100):
                 await asyncio.sleep(0.01)
                 progress.update(output_task, advance=1)
-            
+
             console.print(f"✅ Pipeline complete!")
-            
+
         except Exception as e:
             console.print(f"❌ Pipeline failed: {e}", style="red")
             raise typer.Exit(1)
-    
+
     # Display final summary
     _display_pipeline_summary(pipeline_state, dry_run)
 
 def _display_pipeline_summary(pipeline_state: dict, dry_run: bool):
     """Display beautiful pipeline summary."""
-    
+
     summary_table = Table(title="🎉 Pipeline Summary")
     summary_table.add_column("Phase", style="cyan", no_wrap=True)
     summary_table.add_column("Status", justify="center")
     summary_table.add_column("Result", style="yellow")
-    
+
     summary_table.add_row("Column Analysis", "✅ Complete", "1 medication column identified")
     summary_table.add_row("Medication Extraction", "✅ Complete", "150 unique medications found")
-    
+
     if 'research' in pipeline_state:
         research = pipeline_state['research']
         summary_table.add_row("Web Research", "✅ Complete", f"{research['enhanced']} medications enhanced")
-    
+
     if 'classifications' in pipeline_state:
         classify = pipeline_state['classifications']
         summary_table.add_row("Classification", "✅ Complete", f"{classify['classified']} medications classified")
-    
+
     improvement_pct = "45.2%"  # Simulated
     summary_table.add_row("Overall Improvement", "🎯 Success", f"{improvement_pct} matching improvement")
-    
+
     console.print(summary_table)
-    
+
     if dry_run:
         console.print("\n🧪 [bold yellow]Dry run completed - no files were modified[/bold yellow]")
     else:
@@ -935,10 +935,10 @@ def _get_file_size(file_path: Path) -> str:
 @app.command("status")
 def pipeline_status() -> None:
     """Show pipeline execution status and history."""
-    
+
     console.print("📊 Pipeline Status", style="bold blue")
     console.print("⚠️  Status tracking not yet implemented", style="yellow")
-    
+
     # Would show recent pipeline runs, their status, and results
 ```
 
@@ -952,15 +952,15 @@ from ..base import DiseaseModule, DrugClassConfig
 
 class NSCLCModule(DiseaseModule):
     """Non-Small Cell Lung Cancer disease module."""
-    
+
     @property
     def name(self) -> str:
         return "nsclc"
-    
-    @property  
+
+    @property
     def display_name(self) -> str:
         return "Non-Small Cell Lung Cancer"
-    
+
     @property
     def drug_classes(self) -> List[DrugClassConfig]:
         return [
@@ -971,7 +971,7 @@ class NSCLCModule(DiseaseModule):
                 web_sources=["fda", "nccn", "clinicaltrials"]
             ),
             DrugClassConfig(
-                name="immunotherapy", 
+                name="immunotherapy",
                 keywords=["pembrolizumab", "nivolumab", "atezolizumab", "durvalumab", "ipilimumab", "cemiplimab"],
                 confidence_threshold=0.85,
                 web_sources=["fda", "nccn", "oncokb"]
@@ -995,16 +995,16 @@ class NSCLCModule(DiseaseModule):
                 web_sources=["fda", "oncokb"]
             )
         ]
-    
+
     def get_web_sources(self) -> List[str]:
         return [
             "fda_nsclc",
-            "clinicaltrials_lung_cancer", 
+            "clinicaltrials_lung_cancer",
             "nccn_nsclc_guidelines",
             "oncokb_lung",
             "asco_nsclc"
         ]
-    
+
     def get_llm_context(self) -> str:
         return """
 You are a clinical oncologist specializing in Non-Small Cell Lung Cancer (NSCLC) treatment.
@@ -1025,20 +1025,20 @@ Classify medications into these categories:
 
 Consider generic names, brand names, trial designations, and abbreviations.
 """
-    
+
     def validate_medication(self, medication: str, drug_class: str) -> bool:
         """NSCLC-specific medication validation."""
-        
+
         medication_lower = medication.lower()
-        
+
         # Known NSCLC medications by class
         known_nsclc_meds = {
             "chemotherapy": [
-                "carboplatin", "paclitaxel", "pemetrexed", "docetaxel", "gemcitabine", 
+                "carboplatin", "paclitaxel", "pemetrexed", "docetaxel", "gemcitabine",
                 "cisplatin", "etoposide", "vinorelbine", "irinotecan"
             ],
             "immunotherapy": [
-                "pembrolizumab", "keytruda", "nivolumab", "opdivo", "atezolizumab", 
+                "pembrolizumab", "keytruda", "nivolumab", "opdivo", "atezolizumab",
                 "tecentriq", "durvalumab", "imfinzi", "ipilimumab", "yervoy"
             ],
             "targeted_therapy": [
@@ -1046,10 +1046,10 @@ Consider generic names, brand names, trial designations, and abbreviations.
                 "crizotinib", "xalkori", "alectinib", "alecensa", "lorlatinib", "lorbrena"
             ]
         }
-        
+
         if drug_class in known_nsclc_meds:
             return any(known_med in medication_lower for known_med in known_nsclc_meds[drug_class])
-        
+
         return True  # Allow unknown medications for discovery
 
 # Register the module
@@ -1063,29 +1063,29 @@ disease:
   name: "Non-Small Cell Lung Cancer"
   code: "nsclc"
   description: "Lung cancer treatment and research medications"
-  
+
 drug_classes:
   chemotherapy:
-    keywords: 
+    keywords:
       - "carboplatin"
-      - "paclitaxel" 
+      - "paclitaxel"
       - "pemetrexed"
       - "docetaxel"
       - "gemcitabine"
       - "cisplatin"
     confidence_threshold: 0.8
     web_sources: ["fda", "nccn", "clinicaltrials"]
-    
+
   immunotherapy:
     keywords:
       - "pembrolizumab"
       - "nivolumab"
-      - "atezolizumab" 
+      - "atezolizumab"
       - "durvalumab"
       - "ipilimumab"
     confidence_threshold: 0.85
     web_sources: ["fda", "nccn", "oncokb"]
-    
+
   targeted_therapy:
     keywords:
       - "osimertinib"
@@ -1101,19 +1101,19 @@ web_sources:
     base_url: "https://www.accessdata.fda.gov/scripts/cder/daf/"
     rate_limit: 1.0
     timeout: 30
-    
+
   clinicaltrials:
     base_url: "https://clinicaltrials.gov/api/v2/"
     params:
       condition: "Non-Small Cell Lung Cancer"
       status: ["Recruiting", "Active", "Completed"]
     rate_limit: 0.5
-    
+
   nccn:
     guidelines_url: "https://www.nccn.org/guidelines/category_1"
     disease_code: "nsclc"
     rate_limit: 2.0
-    
+
   oncokb:
     base_url: "https://www.oncokb.org/api/v1/"
     cancer_type: "Lung Cancer"
@@ -1132,7 +1132,7 @@ validation:
   require_human_review: true
   confidence_threshold: 0.7
   auto_approve_threshold: 0.9
-  
+
 output:
   format: "yaml"
   include_metadata: true
@@ -1171,7 +1171,7 @@ output:
 4. Build medication deduplication
 5. Add statistical analysis features
 
-### Day 3: Web Research Engine  
+### Day 3: Web Research Engine
 **Morning (4 hours)**
 1. Create base web scraper architecture
 2. Implement FDA Orange Book scraper
@@ -1258,7 +1258,7 @@ output:
 - Plugin management system
 - Configuration loading per disease
 
-### 3. Data Analyzer (`src/med_aug/core/analyzer.py`) 
+### 3. Data Analyzer (`src/med_aug/core/analyzer.py`)
 - Column detection algorithms
 - Confidence scoring system
 - Statistical analysis methods
@@ -1296,7 +1296,7 @@ class TestDataAnalyzer:
     @pytest.fixture
     def analyzer(self):
         return DataAnalyzer()
-    
+
     @pytest.fixture
     def sample_medication_data(self):
         return pd.DataFrame({
@@ -1304,29 +1304,29 @@ class TestDataAnalyzer:
             'DOSE': ['200mg', '100mg', '80mg', '40mg'],
             'PATIENT_ID': ['P001', 'P002', 'P003', 'P004']
         })
-    
+
     def test_column_detection_high_confidence(self, analyzer, sample_medication_data):
         results = analyzer.analyze_columns_from_dataframe(sample_medication_data)
-        
+
         assert len(results) > 0
         agent_result = next((r for r in results if r.column == 'AGENT'), None)
         assert agent_result is not None
         assert agent_result.confidence > 0.8
         assert 'pembrolizumab' in agent_result.sample_medications
-    
+
     def test_column_detection_low_confidence(self, analyzer):
         low_conf_data = pd.DataFrame({
             'DOSE': ['200mg', '100mg', '80mg', '40mg'],
             'PATIENT_ID': ['P001', 'P002', 'P003', 'P004']
         })
-        
+
         results = analyzer.analyze_columns_from_dataframe(low_conf_data)
         for result in results:
             assert result.confidence < 0.5
-    
+
     @pytest.mark.parametrize("medication,expected", [
         ("pembrolizumab", True),
-        ("Keytruda", True), 
+        ("Keytruda", True),
         ("osimertinib", True),
         ("random_text", False),
         ("", False),
@@ -1349,21 +1349,21 @@ class TestFDAScraper:
         async with httpx.AsyncClient() as client:
             scraper = FDAAsyncScraper(client)
             result = await scraper.scrape_medication_info("pembrolizumab")
-            
+
             assert "generic_names" in result
             assert "brand_names" in result
             assert len(result["brand_names"]) > 0
-    
+
     @pytest.mark.asyncio
     async def test_rate_limiting(self):
         async with httpx.AsyncClient() as client:
             scraper = FDAAsyncScraper(client, rate_limit=0.1)
-            
+
             start_time = time.time()
             await scraper.scrape_medication_info("drug1")
             await scraper.scrape_medication_info("drug2")
             elapsed = time.time() - start_time
-            
+
             assert elapsed >= 0.1  # Rate limiting enforced
 ```
 
@@ -1379,28 +1379,28 @@ from typer.testing import CliRunner
 class TestFullPipeline:
     def test_complete_nsclc_pipeline(self, sample_nsclc_data, temp_output_dir):
         runner = CliRunner()
-        
+
         result = runner.invoke(app, [
-            "pipeline", "run", 
-            "nsclc", 
+            "pipeline", "run",
+            "nsclc",
             str(sample_nsclc_data),
             "tests/fixtures/sample_conmeds.yml",
             "--output", str(temp_output_dir / "output.yml"),
             "--dry-run"
         ])
-        
+
         assert result.exit_code == 0
         assert "Pipeline complete" in result.stdout
         assert "150 unique medications" in result.stdout
-    
+
     def test_interactive_column_selection(self, multi_column_data):
         runner = CliRunner()
-        
+
         result = runner.invoke(app, [
             "analyze", "columns",
             str(multi_column_data)
         ], input="1\n")  # Select first option
-        
+
         assert result.exit_code == 0
         assert "medication column" in result.stdout.lower()
 ```
@@ -1413,30 +1413,30 @@ class TestFullPipeline:
 system:
   name: "Medication Augmentation System"
   version: "1.0.0"
-  
+
 logging:
   level: "INFO"
   format: "structured"
   output: "console"
-  
+
 cache:
   type: "redis"  # redis, memory, disk
   ttl: 3600
   max_size: 1000
-  
+
 llm:
   default_provider: "openai"
   default_model: "gpt-4"
   temperature: 0.1
   max_tokens: 2000
   batch_size: 10
-  
+
 web_scraping:
   default_rate_limit: 1.0
   default_timeout: 30
   max_retries: 3
   user_agent: "MedicationAugmentation/1.0"
-  
+
 processing:
   max_workers: 4
   chunk_size: 1000
@@ -1481,7 +1481,7 @@ BACKUP_FILES=true
    - PARP inhibitors (olaparib, rucaparib)
    - Radiopharmaceuticals (lutetium-177, radium-223)
 
-2. **Cardiovascular Module**  
+2. **Cardiovascular Module**
    - Antihypertensives (ACE inhibitors, ARBs, beta blockers)
    - Lipid-lowering drugs (statins, PCSK9 inhibitors)
    - Anticoagulants and antiplatelets
@@ -1532,7 +1532,7 @@ BACKUP_FILES=true
 - ✅ **System Reliability**: 99%+ uptime during processing
 - ✅ **Extensibility**: New disease module creation in <1 day
 
-### Business Metrics  
+### Business Metrics
 - ✅ **NSCLC Coverage**: Expand from 54 to 70+ drug classes
 - ✅ **Medication Density**: 20-50+ names per drug class
 - ✅ **Total Variations**: 1000+ medication variations discovered

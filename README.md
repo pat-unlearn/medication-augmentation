@@ -1,9 +1,6 @@
-# Medication Augmentation System
+# 💊 Medication Augmentation System
 
-**Version:** 1.0
-**Focus:** Multi-Disease Clinical Pipeline Framework
-
-## Overview
+## 🎯 Overview
 
 The Medication Augmentation System is a flexible, modular framework that automatically expands `conmeds_defaults.yml` configuration files for any disease indication. It captures comprehensive generic and brand names for each drug class, improving medication matching accuracy in clinical data processing pipelines across multiple therapeutic areas.
 
@@ -11,7 +8,7 @@ The Medication Augmentation System is a flexible, modular framework that automat
 - **NSCLC** (Non-Small Cell Lung Cancer) - Primary implementation
 - **Extensible Architecture** for additional diseases (breast cancer, prostate cancer, etc.)
 
-## Problem Statement
+## ❗ Problem Statement
 
 Clinical research across therapeutic areas faces common challenges with medication enrichment processes that rely on manually curated `conmeds_defaults.yml` files with limited medication name coverage, resulting in:
 
@@ -20,7 +17,7 @@ Clinical research across therapeutic areas faces common challenges with medicati
 - **High false negative rates** - LLM classification without disease-specific context misses therapeutic area medications
 - **Scalability issues** - Each new disease requires separate manual curation efforts
 
-## Solution
+## ✅ Solution
 
 A modular, disease-agnostic automated pipeline that intelligently expands `conmeds_defaults.yml` files for any therapeutic area:
 
@@ -32,23 +29,83 @@ A modular, disease-agnostic automated pipeline that intelligently expands `conme
 
 **Key Innovation:** Disease modules are completely interchangeable - the same pipeline works for NSCLC, breast cancer, prostate cancer, or any therapeutic area by simply switching the disease module.
 
-## Architecture
+## 🏗️ Architecture
 
-```
-Raw Data  ->  Column Detection  ->  Name Extraction  ->  Web Research  ->  LLM Classification  ->  Validation  ->  conmeds.yml
+```mermaid
+flowchart
+    %% Input Layer
+    subgraph TB inputs [" 📥 Inputs "]
+        A[Clinical Data<br/>CSV/Excel/Parquet]
+        A1[conmeds_defaults.yml<br/>Base Configuration]
+        A2[Disease Module<br/>NSCLC/Breast Cancer/etc.]
+    end
+
+    %% Core Pipeline
+    subgraph pipeline [" ⚙️ Core Pipeline "]
+        B[Pipeline Orchestrator]
+        C[Data Analysis<br/>Column Detection & Statistics]
+        D[Name Extraction<br/>Normalize & Deduplicate]
+        E[Web Research<br/>FDA, ClinicalTrials.gov, etc.]
+        F[LLM Classification<br/>Claude CLI + Disease Context]
+        G[Validation<br/>Quality & Confidence Checks]
+
+        B --> C --> D --> E --> F --> G
+    end
+
+    %% Outputs
+    subgraph outputs [" 📤 Outputs "]
+        H[conmeds_augmented.yml<br/>Enhanced Medication DB]
+        I[classification_results.json<br/>Detailed Results]
+        J[pipeline_summary.json<br/>Execution Stats]
+    end
+
+    %% Support Systems
+    subgraph support [" 🛠️ Support Systems "]
+        K[Disease Module Registry]
+        L[Response Cache]
+        M[Checkpoint System]
+        N[Progress Tracking]
+    end
+
+    %% Main Flow
+    A --> B
+    G --> H
+    G --> I
+    G --> J
+    A2 -.-> F
+
+    %% Support Connections
+    K -.-> A2
+    L -.-> F
+    M -.-> B
+    N -.-> B
+    A1 -.-> G
+
+    %% Dark-mode friendly styling
+    classDef inputStyle fill:#2a4d69,stroke:#4a90e2,stroke-width:2px,color:#ffffff
+    classDef processStyle fill:#4a2d69,stroke:#9b59b6,stroke-width:2px,color:#ffffff
+    classDef outputStyle fill:#2d5a2d,stroke:#27ae60,stroke-width:2px,color:#ffffff
+    classDef supportStyle fill:#69462a,stroke:#f39c12,stroke-width:2px,color:#ffffff
+
+    %% Apply styles
+    class A,A1,A2 inputStyle
+    class B,C,D,E,F,G processStyle
+    class H,I,J outputStyle
+    class K,L,M,N supportStyle
 ```
 
 ### Core Components
 
-- **Pipeline Orchestrator** - Manages multi-phase execution with checkpoint recovery
-- **Data Analyzer** - Identifies medication columns in clinical datasets
-- **Name Extractor** - Cleans and normalizes medication names
+- **Pipeline Orchestrator** - Manages multi-phase execution with checkpoint recovery and progress tracking
+- **Data Analyzer** - Identifies medication columns using statistical analysis and pattern matching
+- **Name Extractor** - Cleans, normalizes, and deduplicates medication names with variant detection
 - **Disease Module Registry** - Pluggable disease-specific configurations (NSCLC, breast cancer, etc.)
-- **Web Scrapers** - Gather drug information from medical databases (configurable per disease)
-- **LLM Classifier** - Categorizes medications using disease-specific therapeutic context
-- **Conmeds Exporter** - Generates production-ready conmeds.yml files for any disease
+- **Web Research Engine** - Gathers drug information from medical databases (FDA, ClinicalTrials.gov, disease-specific sources)
+- **LLM Classifier** - Categorizes medications using disease-specific therapeutic context via Claude CLI with batch processing
+- **Validation Engine** - Applies confidence thresholds, medical accuracy checks, and conflict resolution
+- **Conmeds Exporter** - Generates production-ready conmeds.yml files with comprehensive drug name coverage
 
-## Success Metrics
+## 📊 Success Metrics
 
 - **Coverage expansion**: Expand drug classes with 20-50+ names each (NSCLC: 54 → 70+ classes)
 - **Matching improvement**: 30%+ increase in medication matching rates across diseases
@@ -56,7 +113,7 @@ Raw Data  ->  Column Detection  ->  Name Extraction  ->  Web Research  ->  LLM C
 - **Scalability**: New diseases can be added in days, not months
 - **False negative reduction**: 50%+ decrease in missed therapeutic area medications
 
-## Installation
+## 📦 Installation
 
 ```bash
 # Clone repository
@@ -75,7 +132,7 @@ source .venv/bin/activate
 med-aug info
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
 ### 1. Activate Virtual Environment
 
@@ -128,7 +185,7 @@ The pipeline generates:
 - **`classification_results.json`** - Detailed classification results with confidence scores
 - **`pipeline_summary.json`** - Execution summary and statistics
 
-## Configuration
+## ⚙️ Configuration
 
 ### Pipeline Configuration
 
@@ -158,7 +215,7 @@ config = PipelineConfig(
 
 See `src/med_aug/diseases/` for complete disease module definitions and examples of creating new modules.
 
-## Data Sources
+## 📊 Data Sources
 
 ### Input Requirements
 - Clinical datasets with medication name columns (CSV, Excel, Parquet formats)
@@ -170,25 +227,25 @@ See `src/med_aug/diseases/` for complete disease module definitions and examples
 - **Clinical Guidelines** - NCCN, ASCO, disease-specific treatment guidelines
 - **Disease Databases** - OncoKB (oncology), specialty databases per therapeutic area
 
-## Development
+## 👩‍💻 Development
 
 ### Project Structure
 
 ```
 src/med_aug/
-├── cli/                    # Command-line interface
+├── cli/                   # Command-line interface
 │   ├── app.py             # Main CLI application
 │   └── commands/          # CLI command implementations
-├── pipeline/               # Core pipeline components
+├── pipeline/              # Core pipeline components
 │   ├── orchestrator.py    # Pipeline execution management
 │   ├── phases.py          # Individual processing phases
 │   ├── checkpoint.py      # Recovery and resumption
 │   └── progress.py        # Execution tracking
-├── diseases/               # Disease-specific modules
+├── diseases/              # Disease-specific modules
 │   ├── nsclc/             # NSCLC drug definitions
 │   ├── base.py            # Base disease module interface
 │   └── registry.py        # Disease module registry
-├── infrastructure/         # External service integrations
+├── infrastructure/        # External service integrations
 │   └── scrapers/          # Web scraping implementations
 ├── llm/                   # LLM integration (Claude CLI)
 ├── core/                  # Data processing utilities
@@ -220,7 +277,7 @@ ruff src/ tests/
 mypy src/
 ```
 
-## Usage Examples
+## 💡 Usage Examples
 
 ### Process MSK CHORD Dataset
 
@@ -251,9 +308,9 @@ med-aug pipeline run data/clinical_data.csv \
   --resume-from llm_classification
 ```
 
-## Complete Workflow Example
+## 📝 Complete Workflow Example
 
-📋 **See [WORKFLOW_EXAMPLE.md](WORKFLOW_EXAMPLE.md) for a detailed end-to-end example** showing how the system processes real clinical data to augment conmeds.yml files with comprehensive medication coverage.
+📋 **See [WORKFLOW_EXAMPLE.md](docs/WORKFLOW_EXAMPLE.md) for a detailed end-to-end example** showing how the system processes real clinical data to augment conmeds.yml files with comprehensive medication coverage.
 
 The example demonstrates:
 - Processing clinical trial data with mixed medication nomenclature
@@ -261,7 +318,7 @@ The example demonstrates:
 - Quality assurance preventing false positives
 - Generation of augmented conmeds.yml with new medication names
 
-## Integration
+## 🔗 Integration
 
 The generated `conmeds_augmented.yml` file can be directly integrated into existing clinical pipelines for any disease:
 
@@ -279,7 +336,7 @@ for drug_class, medications in conmeds.items():
     # Generate taking_{drug_class} boolean indicators
 ```
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
 ### Claude CLI Setup
 ```bash
@@ -298,7 +355,7 @@ claude --version
 
 **Web Scraping Errors**: Check network connectivity and rate limiting
 
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/enhancement`)
@@ -306,22 +363,22 @@ claude --version
 4. Ensure code quality (`black`, `ruff`, `mypy`)
 5. Submit a pull request
 
-## License
+## 📄 License
 
 [License information]
 
-## Support
+## 💬 Support
 
 For issues and questions:
-- Create GitHub issues for bugs and feature requests
-- Review documentation in `docs/` directory
+- Create Jira issues for bugs and feature requests
+- Review documentation in each directory
 - Check troubleshooting section above
 
 ---
 
 **Status**: ✅ Production-ready multi-disease medication augmentation framework focused on expanding conmeds.yml with comprehensive drug name coverage across therapeutic areas.
 
-## Adding New Disease Modules
+## 🩺 Adding New Disease Modules
 
 The system is designed for easy extension to new diseases:
 

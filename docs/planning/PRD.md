@@ -2,9 +2,9 @@
 
 ## Overview
 
-**Product Name:** NSCLC Medication Augmentation System  
-**Version:** 1.0  
-**Date:** September 3, 2025  
+**Product Name:** NSCLC Medication Augmentation System
+**Version:** 1.0
+**Date:** September 3, 2025
 **Owner:** Pat Sheehan + Data Science team
 **Focus:** Non-Small Cell Lung Cancer (NSCLC) Pipeline Only
 
@@ -87,7 +87,7 @@ Raw Data → Column Detection → Name Extraction → Web Research → LLM Class
 - Confidence scoring for column selection
 - Support for various data formats (CSV, TSV, etc.)
 
-**Input:** Raw clinical datasets  
+**Input:** Raw clinical datasets
 **Output:** Identified medication column(s) with confidence scores
 
 #### 2. Medication Name Extractor
@@ -98,7 +98,7 @@ Raw Data → Column Detection → Name Extraction → Web Research → LLM Class
 - Duplicate removal and standardization
 - Statistical analysis of name frequency
 
-**Input:** Raw medication column data  
+**Input:** Raw medication column data
 **Output:** Cleaned, unique medication name list
 
 #### 3. Web Research Engine
@@ -110,7 +110,7 @@ Raw Data → Column Detection → Name Extraction → Web Research → LLM Class
 - Drug class classification context
 - Rate limiting and respectful scraping
 
-**Input:** Medication names from raw data  
+**Input:** Medication names from raw data
 **Output:** Enriched medication database with context
 
 #### 4. LLM Classification System
@@ -122,7 +122,7 @@ Raw Data → Column Detection → Name Extraction → Web Research → LLM Class
 - Batch processing capabilities
 - Human-in-the-loop validation
 
-**Input:** Medication names + web context + existing drug class definitions  
+**Input:** Medication names + web context + existing drug class definitions
 **Output:** Classified medications with confidence scores
 
 #### 5. Validation & Quality Assurance
@@ -142,7 +142,7 @@ Raw Data → Column Detection → Name Extraction → Web Research → LLM Class
    - **Drug categories**: Chemotherapy (paclitaxel, carboplatin, pemetrexed), Immunotherapy (pembrolizumab, nivolumab), Targeted therapy (osimertinib, crizotinib, alectinib)
 2. **Current NSCLC conmeds_defaults.yml**: Located at `packages/plombier/src/plombier/pipelines/nsclc/conmeds_defaults.yml`:
    - **Current coverage**: 54 drug classes with 2-10 medication names each
-   - **Example entries**: 
+   - **Example entries**:
      - `taking_pembrolizumab: [pembrolizumab, Keytruda]`
      - `taking_osimertinib: [osimertinib, Tagrisso]`
      - `taking_paclitaxel: [paclitaxel, Abraxane, Taxol, Paclitaxel Loaded Polymeric Micelle, Paclitaxel Poliglumex, Nab Paclitaxel]`
