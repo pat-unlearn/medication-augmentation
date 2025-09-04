@@ -12,6 +12,7 @@ from med_aug.llm.providers import (
     LLMModel,
     LLMResponse,
     ProviderFactory,
+    LLMError,
 )
 
 
@@ -169,7 +170,7 @@ class TestClaudeCLIProvider:
         # Override command to something that doesn't exist
         provider.cli_command = "nonexistent_command_xyz"
 
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(LLMError):
             await provider.generate("Test prompt")
 
 

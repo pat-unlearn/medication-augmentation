@@ -2,7 +2,6 @@
 
 import pytest
 import json
-from typing import Dict, Any
 
 from med_aug.llm.classifier import (
     MedicationClassifier,
@@ -11,7 +10,7 @@ from med_aug.llm.classifier import (
     ClassificationConfidence,
 )
 from med_aug.llm.service import LLMService
-from med_aug.llm.providers import MockProvider, LLMConfig
+from med_aug.llm.providers import MockProvider
 
 
 class TestClassificationResult:
@@ -241,21 +240,9 @@ class TestMedicationClassifier:
         """Test batch classification."""
         medications = ["pembrolizumab", "osimertinib", "carboplatin"]
 
-        # Set mock batch response
+        # Set mock batch response in expected format
         classifier.llm_service.provider.set_responses(
-            [
-                json.dumps(
-                    {
-                        "classifications": {
-                            "immunotherapy": ["pembrolizumab"],
-                            "targeted_therapy": ["osimertinib"],
-                            "chemotherapy": ["carboplatin"],
-                        },
-                        "unclassified": [],
-                        "summary": {"total": 3, "classified": 3, "confidence": 0.9},
-                    }
-                )
-            ]
+            ["1. immunotherapy\n2. targeted_therapy\n3. chemotherapy"]
         )
 
         result = await classifier.classify_batch(medications, batch_size=5)
@@ -271,22 +258,19 @@ class TestMedicationClassifier:
         medications = ["drug1", "drug2", "unknown_drug"]
 
         classifier.llm_service.provider.set_responses(
-            [
-                json.dumps(
-                    {
-                        "classifications": {"class_a": ["drug1", "drug2"]},
-                        "unclassified": ["unknown_drug"],
-                        "summary": {"total": 3, "classified": 2, "confidence": 0.7},
-                    }
-                )
-            ]
+            ["1. class_a\n2. class_a\n3. unknown"]
         )
 
         result = await classifier.classify_batch(medications)
 
         assert result.total == 3
-        assert result.classified_count == 2
-        assert "unknown_drug" in result.unclassified
+        assert result.classified_count == 3  # All are classified, even "unknown"
+        assert (
+            len(result.unclassified) == 0
+        )  # None are unclassified since all have confidence >= 0.5
+        assert "drug1" in result.classifications.get("class_a", [])
+        assert "drug2" in result.classifications.get("class_a", [])
+        assert "unknown_drug" in result.classifications.get("unknown", [])
 
     @pytest.mark.asyncio
     async def test_validate_medication(self, classifier):

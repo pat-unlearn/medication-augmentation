@@ -14,7 +14,7 @@ class PromptTemplate:
     system: str
     user_template: str
     output_format: Optional[str] = None
-    examples: List[Dict[str, Any]] = None
+    examples: Optional[List[Dict[str, Any]]] = None
 
     def format(self, **kwargs) -> tuple[str, str]:
         """

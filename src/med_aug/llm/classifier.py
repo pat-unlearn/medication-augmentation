@@ -114,7 +114,9 @@ class ClassificationResult(DictMixin):
                     if candidate and len(candidate) < 50:
                         primary_class = candidate.replace(" ", "_").replace("-", "_")
                         # Try to extract confidence if we found a match
-                        confidence_match = re.search(r"Confidence[:\s]*([0-9.]+)", response_text, re.IGNORECASE)
+                        confidence_match = re.search(
+                            r"Confidence[:\s]*([0-9.]+)", response_text, re.IGNORECASE
+                        )
                         if confidence_match:
                             try:
                                 confidence = float(confidence_match.group(1))
@@ -128,10 +130,18 @@ class ClassificationResult(DictMixin):
             if primary_class == "unknown":
                 # Skip fallback parsing for error messages
                 error_indicators = [
-                    "invalid", "error", "cannot", "unable", "failed", "not found",
-                    "unrecognized", "unknown", "unexpected", "malformed"
+                    "invalid",
+                    "error",
+                    "cannot",
+                    "unable",
+                    "failed",
+                    "not found",
+                    "unrecognized",
+                    "unknown",
+                    "unexpected",
+                    "malformed",
                 ]
-                
+
                 response_lower = response_text.lower()
                 if any(indicator in response_lower for indicator in error_indicators):
                     # This looks like an error message, don't try to parse it
@@ -286,7 +296,7 @@ class MedicationClassifier:
             # Generate classification
             template = "context_aware" if additional_context else "classification"
             response = await self.llm_service.generate_with_template(
-                template, **template_params
+                template, use_cache=True, **template_params
             )
 
             # Parse result
