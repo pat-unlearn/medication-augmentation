@@ -85,24 +85,24 @@ med-aug pipeline run nsclc_patients.csv \
 ### **Phase 1: Data Ingestion** ⏱️ 0.2s
 ```
 ┌─ Data Ingestion ─────────────────────────────┐
-│ ✅ Loaded: nsclc_patients.csv               │
-│ 📊 Rows: 10, Columns: 4                     │
-│ 🎯 Target columns identified                │
+│ ✅ Loaded: nsclc_patients.csv                │
+│ 📊 Rows: 10, Columns: 4                      │
+│ 🎯 Target columns identified                 │
 └──────────────────────────────────────────────┘
 ```
 
 ### **Phase 2: Column Analysis** ⏱️ 0.8s
 ```
 ┌─ Column Analysis ────────────────────────────┐
-│ 🔍 Analyzing columns for medication data... │
+│ 🔍 Analyzing columns for medication data...  │
 │                                              │
 │ Results:                                     │
-│ • treatment_regimen: 0.98 confidence ⭐     │
-│ • patient_id: 0.05 confidence               │
-│ • response: 0.12 confidence                 │
-│ • line_of_therapy: 0.08 confidence          │
+│ • treatment_regimen: 0.98 confidence ⭐      │
+│ • patient_id: 0.05 confidence                │
+│ • response: 0.12 confidence                  │
+│ • line_of_therapy: 0.08 confidence           │
 │                                              │
-│ ✅ Found 1 high-confidence medication column│
+│ ✅ Found 1 high-confidence medication column │
 └──────────────────────────────────────────────┘
 ```
 
@@ -124,29 +124,29 @@ med-aug pipeline run nsclc_patients.csv \
 │ • "AZD3759 200mg daily"                      │
 │                                              │
 │ 🧹 Normalized medications:                   │
-│ [keytruda, azd9291, carbo, pem, avastin,    │
-│  carboplatin, paclitaxel, xalkori, co-1686, │
+│ [keytruda, azd9291, carbo, pem, avastin,     │
+│  carboplatin, paclitaxel, xalkori, co-1686,  │
 │  lorlatinib, selpercatinib, mobocertinib,    │
 │  azd3759]                                    │
 │                                              │
-│ ✅ 13 unique medication names extracted     │
+│ ✅ 13 unique medication names extracted      │
 └──────────────────────────────────────────────┘
 ```
 
 ### **Phase 4: Web Research** ⏱️ 15.3s *(Optional)*
 ```
 ┌─ Web Research ───────────────────────────────┐
-│ 🌐 Researching unknown medications...       │
+│ 🌐 Researching unknown medications...        │
 │                                              │
 │ FDA.gov: ✅ 9/13 medications found           │
-│ ClinicalTrials.gov: ✅ 11/13 found          │
-│ NCCN Guidelines: ✅ 8/13 found              │
+│ ClinicalTrials.gov: ✅ 11/13 found           │
+│ NCCN Guidelines: ✅ 8/13 found               │
 │                                              │
 │ Key discoveries:                             │
-│ • AZD9291 → osimertinib (FDA approved name) │
-│ • CO-1686 → rociletinib (development name)  │
-│ • selpercatinib → FDA approved RET inhibitor│
-│ • mobocertinib → FDA approved EGFR inhibitor│
+│ • AZD9291 → osimertinib (FDA approved name)  │
+│ • CO-1686 → rociletinib (development name)   │
+│ • selpercatinib → FDA approved RET inhibitor │
+│ • mobocertinib → FDA approved EGFR inhibitor │
 │                                              │
 │ ✅ Enhanced with clinical context            │
 └──────────────────────────────────────────────┘
@@ -154,108 +154,108 @@ med-aug pipeline run nsclc_patients.csv \
 
 ### **Phase 5: LLM Classification** ⏱️ 28.7s
 ```
-┌─ LLM Classification ─────────────────────────┐
-│ 🤖 Using Claude CLI for NSCLC classification│
+┌─ LLM Classification ───────────────────────────┐
+│ 🤖 Using Claude CLI for NSCLC classification   │
 │ 📋 Reference: conmeds_defaults.yml (57 classes)│
-│                                              │
-│ Classifying 13 medications...               │
-│ ████████████████████████ 100%               │
-│                                              │
-│ Classification Results:                      │
-│ ✅ keytruda → taking_pembrolizumab (existing)│
-│ ❓ azd9291 → taking_osimertinib (NEW!)      │
-│ ✅ carbo → taking_carboplatin (existing)    │
-│ ✅ pem → taking_pemetrexed (existing)       │
-│ ✅ avastin → taking_bevacizumab (existing)  │
-│ ✅ carboplatin → taking_carboplatin (existing)│
-│ ✅ paclitaxel → taking_paclitaxel (existing)│
-│ ✅ xalkori → taking_crizotinib (existing)   │
-│ ❓ co-1686 → taking_rociletinib (NEW!)      │
-│ ✅ lorlatinib → taking_lorlatinib (existing)│
-│ ❓ selpercatinib → NEW CLASS NEEDED!        │
-│ ❓ mobocertinib → NEW CLASS NEEDED!         │
-│ ❓ azd3759 → taking_osimertinib (NEW!)      │
-│                                              │
-│ Summary:                                     │
-│ • 8 matched existing entries ✅             │
-│ • 3 new names for existing classes ❓        │
-│ • 2 new drug classes needed ❗               │
-└──────────────────────────────────────────────┘
+│                                                │
+│ Classifying 13 medications...                  │
+│ ████████████████████████ 100%                  │
+│                                                │
+│ Classification Results:                        │
+│ ✅ keytruda → taking_pembrolizumab (existing)  │
+│ ❓ azd9291 → taking_osimertinib (NEW!)         │
+│ ✅ carbo → taking_carboplatin (existing)       │
+│ ✅ pem → taking_pemetrexed (existing)          │
+│ ✅ avastin → taking_bevacizumab (existing)     │
+│ ✅ carboplatin → taking_carboplatin (existing) │
+│ ✅ paclitaxel → taking_paclitaxel (existing)   │
+│ ✅ xalkori → taking_crizotinib (existing)      │
+│ ❓ co-1686 → taking_rociletinib (NEW!)         │
+│ ✅ lorlatinib → taking_lorlatinib (existing)   │
+│ ❓ selpercatinib → NEW CLASS NEEDED!           │
+│ ❓ mobocertinib → NEW CLASS NEEDED!            │
+│ ❓ azd3759 → taking_osimertinib (NEW!)         │
+│                                                │
+│ Summary:                                       │
+│ • 8 matched existing entries ✅                │
+│ • 3 new names for existing classes ❓          │
+│ • 2 new drug classes needed ❗                 │
+└────────────────────────────────────────────────┘
 ```
 
 ### **Phase 6: Evaluation Framework** ⏱️ 12.4s 🆕
 ```
-┌─ Evaluation Framework ───────────────────────┐
-│ 📊 Ground Truth: 57 classes, 147 medications│
-│ 🔍 Evaluating 5 potential additions...      │
-│                                              │
-│ 🤖 LLM Validation Results:                  │
-│                                              │
-│ "azd9291" → taking_osimertinib               │
-│   Assessment: ✅ CORRECT                     │
-│   Confidence: 0.94                          │
-│   Reasoning: "AZD9291 is the development    │
-│              code for osimertinib"          │
-│   Action: ADD to existing list              │
-│                                              │
-│ "co-1686" → taking_rociletinib               │
-│   Assessment: ✅ CORRECT                     │
-│   Confidence: 0.87                          │
-│   Reasoning: "CO-1686 is alternate name     │
-│              for rociletinib"               │
-│   Action: ADD to existing list              │
-│                                              │
-│ "selpercatinib" → NEW class                  │
-│   Assessment: ✅ VALID NEW CLASS             │
-│   Confidence: 0.92                          │
-│   Reasoning: "RET inhibitor, FDA approved   │
-│              for RET+ NSCLC in 2020"        │
-│   Action: CREATE taking_selpercatinib       │
-│                                              │
-│ "mobocertinib" → NEW class                   │
-│   Assessment: ✅ VALID NEW CLASS             │
-│   Confidence: 0.90                          │
-│   Reasoning: "EGFR exon 20 insertion        │
-│              inhibitor, FDA approved 2021"  │
-│   Action: CREATE taking_mobocertinib        │
-│                                              │
-│ "azd3759" → taking_osimertinib               │
-│   Assessment: ✅ CORRECT                     │
-│   Confidence: 0.88                          │
-│   Reasoning: "CNS-penetrant EGFR inhibitor, │
-│              development name for NSCLC"    │
-│   Action: ADD to existing list              │
-│                                              │
-│ Validation Summary:                          │
-│ • 5/5 additions validated (100% success)    │
-│ • 3 names added to existing classes         │
-│ • 2 new drug classes created                │
-│ • 0 false positives prevented ✅            │
-└──────────────────────────────────────────────┘
+┌─ Evaluation Framework ─────────────────────────┐
+│ 📊 Ground Truth: 57 classes, 147 medications   │
+│ 🔍 Evaluating 5 potential additions...         │
+│                                                │
+│ 🤖 LLM Validation Results:                     │
+│                                                │
+│ "azd9291" → taking_osimertinib                 │
+│   Assessment: ✅ CORRECT                       │
+│   Confidence: 0.94                             │
+│   Reasoning: "AZD9291 is the development       │
+│              code for osimertinib"             │
+│   Action: ADD to existing list                 │
+│                                                │
+│ "co-1686" → taking_rociletinib                 │
+│   Assessment: ✅ CORRECT                       │
+│   Confidence: 0.87                             │
+│   Reasoning: "CO-1686 is alternate name        │
+│              for rociletinib"                  │
+│   Action: ADD to existing list                 │
+│                                                │
+│ "selpercatinib" → NEW class                    │
+│   Assessment: ✅ VALID NEW CLASS               │
+│   Confidence: 0.92                             │
+│   Reasoning: "RET inhibitor, FDA approved      │
+│              for RET+ NSCLC in 2020"           │
+│   Action: CREATE taking_selpercatinib          │
+│                                                │
+│ "mobocertinib" → NEW class                     │
+│   Assessment: ✅ VALID NEW CLASS               │
+│   Confidence: 0.90                             │
+│   Reasoning: "EGFR exon 20 insertion           │
+│              inhibitor, FDA approved 2021"     │
+│   Action: CREATE taking_mobocertinib           │
+│                                                │
+│ "azd3759" → taking_osimertinib                 │
+│   Assessment: ✅ CORRECT                       │
+│   Confidence: 0.88                             │
+│   Reasoning: "CNS-penetrant EGFR inhibitor,    │
+│              development name for NSCLC"       │
+│   Action: ADD to existing list                 │
+│                                                │
+│ Validation Summary:                            │
+│ • 5/5 additions validated (100% success)       │
+│ • 3 names added to existing classes            │
+│ • 2 new drug classes created                   │
+│ • 0 false positives prevented ✅               │
+└────────────────────────────────────────────────┘
 ```
 
 ### **Phase 7: Output Generation** ⏱️ 2.1s
 ```
 ┌─ Output Generation ──────────────────────────┐
-│ 📁 Creating augmented conmeds.yml...        │
+│ 📁 Creating augmented conmeds.yml...         │
 │                                              │
 │ Processing changes:                          │
-│ • taking_osimertinib: +2 names              │
-│ • taking_rociletinib: +1 name               │
-│ • taking_selpercatinib: NEW CLASS           │
-│ • taking_mobocertinib: NEW CLASS            │
+│ • taking_osimertinib: +2 names               │
+│ • taking_rociletinib: +1 name                │
+│ • taking_selpercatinib: NEW CLASS            │
+│ • taking_mobocertinib: NEW CLASS             │
 │                                              │
 │ Generated files:                             │
-│ ✅ conmeds_augmented.yml (PRIMARY)          │
-│ ✅ evaluation_report.json                   │
-│ ✅ pipeline_summary.json                    │
-│ ✅ classification_results.csv               │
+│ ✅ conmeds_augmented.yml (PRIMARY)           │
+│ ✅ evaluation_report.json                    │
+│ ✅ pipeline_summary.json                     │
+│ ✅ classification_results.csv                │
 │                                              │
 │ Augmentation Summary:                        │
-│ • Original: 57 classes, 147 medications    │
-│ • Augmented: 59 classes, 152 medications   │
-│ • Coverage increase: +3.4%                 │
-│ • Quality score: 94% confidence             │
+│ • Original: 57 classes, 147 medications      │
+│ • Augmented: 59 classes, 152 medications     │
+│ • Coverage increase: +3.4%                   │
+│ • Quality score: 94% confidence              │
 └──────────────────────────────────────────────┘
 ```
 
