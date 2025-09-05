@@ -292,16 +292,34 @@ class ProgressTracker:
             title="Pipeline Progress",
         )
 
-        # Create phase table
+        # Create phase table with progress details
         table = Table(title="Phase Status")
         table.add_column("Phase", style="cyan")
         table.add_column("Status", style="magenta")
+        table.add_column("Progress", style="green")
         table.add_column("Duration", style="yellow")
 
         for phase_name, progress in self.report.phase_progress.items():
             status_str = self._format_status(progress.status)
 
-            table.add_row(phase_name, status_str, progress.duration_str)
+            # Format progress information
+            if progress.status == PhaseStatus.RUNNING:
+                if progress.current_step:
+                    progress_str = (
+                        f"{progress.progress_percent:.0f}% - {progress.current_step}"
+                    )
+                else:
+                    progress_str = f"{progress.progress_percent:.0f}%"
+            elif progress.status == PhaseStatus.COMPLETED:
+                progress_str = "100% ✅"
+            elif progress.status == PhaseStatus.FAILED:
+                progress_str = "Failed ❌"
+            elif progress.status == PhaseStatus.SKIPPED:
+                progress_str = "Skipped ⏭️"
+            else:
+                progress_str = "Pending..."
+
+            table.add_row(phase_name, status_str, progress_str, progress.duration_str)
 
         layout.split_column(Layout(header, size=6), Layout(table))
 

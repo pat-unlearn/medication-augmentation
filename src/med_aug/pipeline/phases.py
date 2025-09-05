@@ -138,15 +138,20 @@ class DataIngestionPhase(PipelinePhase):
         import pandas as pd
         from pathlib import Path
 
-        logger.info("data_ingestion_started", file=context["input_file"])
+        file_path = Path(context["input_file"])
+        file_size = file_path.stat().st_size
+        logger.info(
+            "data_ingestion_started",
+            file=context["input_file"],
+            file_size_bytes=file_size,
+            file_format=file_path.suffix.lower(),
+        )
         perf_logger.start_operation("data_ingestion")
 
         start_time = datetime.now()
 
         try:
             # Load data file
-            file_path = Path(context["input_file"])
-
             if file_path.suffix.lower() == ".csv":
                 df = pd.read_csv(file_path)
             elif file_path.suffix.lower() in [".xlsx", ".xls"]:
@@ -155,6 +160,32 @@ class DataIngestionPhase(PipelinePhase):
                 df = pd.read_parquet(file_path)
             else:
                 raise ValueError(f"Unsupported file format: {file_path.suffix}")
+
+            # Log detailed dataset information
+            logger.info(
+                "dataset_loaded",
+                rows=len(df),
+                columns=len(df.columns),
+                column_names=list(df.columns),
+                memory_usage_mb=round(
+                    df.memory_usage(deep=True).sum() / 1024 / 1024, 2
+                ),
+            )
+
+            # Log sample data for debugging
+            if len(df) > 0:
+                # Show first few rows of important columns (limit to avoid log spam)
+                sample_data = df.head(3).to_dict("records")
+                logger.info("dataset_sample", sample_rows=sample_data)
+
+                # Log data types
+                dtypes_info = {col: str(dtype) for col, dtype in df.dtypes.items()}
+                logger.info("dataset_dtypes", column_types=dtypes_info)
+
+                # Log null/missing data info
+                null_info = df.isnull().sum().to_dict()
+                if any(null_info.values()):
+                    logger.info("dataset_null_values", null_counts=null_info)
 
             # Store in context
             context["dataframe"] = df
@@ -217,18 +248,45 @@ class ColumnAnalysisPhase(PipelinePhase):
         """Analyze columns to find medication columns."""
         from ..core.analyzer import DataAnalyzer
 
-        logger.info("column_analysis_started")
+        df = context["dataframe"]
+        threshold = context.get("confidence_threshold", 0.5)
+        logger.info(
+            "column_analysis_started",
+            total_columns=len(df.columns),
+            columns=list(df.columns),
+            confidence_threshold=threshold,
+        )
         perf_logger.start_operation("column_analysis")
 
         start_time = datetime.now()
 
         try:
-            df = context["dataframe"]
             analyzer = DataAnalyzer()
 
-            # Analyze with configurable threshold
-            threshold = context.get("confidence_threshold", 0.5)
+            # Analyze each column and log details
             results = analyzer.analyze_dataframe(df, threshold)
+
+            # Log detailed analysis results for each column
+            for result in results:
+                logger.info(
+                    "column_identified_as_medication",
+                    column=result.column,
+                    confidence=round(result.confidence, 3),
+                    unique_values=result.unique_count,
+                    sample_medications=result.sample_medications[:5],
+                )  # Limit samples
+
+            # Log columns that didn't meet threshold
+            identified_columns = {r.column for r in results}
+            rejected_columns = [
+                col for col in df.columns if col not in identified_columns
+            ]
+            if rejected_columns:
+                logger.info(
+                    "columns_rejected_as_medication",
+                    columns=rejected_columns,
+                    reason=f"confidence below {threshold}",
+                )
 
             # Store results in context
             context["column_analysis_results"] = results
@@ -292,14 +350,18 @@ class MedicationExtractionPhase(PipelinePhase):
         """Extract medications from identified columns."""
         from ..core.extractor import MedicationExtractor
 
-        logger.info("medication_extraction_started")
+        df = context["dataframe"]
+        columns = context["medication_columns"]
+        logger.info(
+            "medication_extraction_started",
+            medication_columns=columns,
+            total_rows=len(df),
+        )
         perf_logger.start_operation("medication_extraction")
 
         start_time = datetime.now()
 
         try:
-            df = context["dataframe"]
-            columns = context["medication_columns"]
             extractor = MedicationExtractor()
 
             all_medications = []
@@ -331,25 +393,38 @@ class MedicationExtractionPhase(PipelinePhase):
                     result = extractor.extract_from_series(df[column], column)
                     extraction_results[column] = result
                     all_medications.extend(result.normalized_medications)
+
+                    # Show top medications from this column for context
+                    top_meds = result.get_top_medications(10)
                     logger.info(
                         "extracted_from_column",
                         column=column,
                         medications_found=len(result.normalized_medications),
+                        total_rows_in_column=result.total_rows,
+                        top_medications=dict(top_meds) if top_meds else {},
                     )
 
             # Store in context
+            unique_medications = list(set(all_medications))
             context["extraction_results"] = extraction_results
-            context["all_medications"] = list(set(all_medications))
+            context["all_medications"] = unique_medications
+
+            # Log summary of all unique medications found across all columns
+            logger.info(
+                "all_unique_medications_extracted",
+                unique_count=len(unique_medications),
+                medications=unique_medications[:20],
+            )  # Show first 20 for context
 
             duration = perf_logger.end_operation(
                 "medication_extraction",
                 columns_processed=len(columns),
-                unique_medications=len(context["all_medications"]),
+                unique_medications=len(unique_medications),
             )
 
             logger.info(
                 "medication_extraction_completed",
-                unique_medications=len(context["all_medications"]),
+                unique_medications=len(unique_medications),
                 duration=duration,
             )
 
@@ -574,9 +649,11 @@ class MedicationNormalizationPhase(PipelinePhase):
         start_time = datetime.now()
 
         try:
-            # Get configuration
+            # Get configuration and progress tracker
             disease_module = context.get("disease_module", "nsclc")
             raw_medications = context.get("all_medications", [])
+            progress_tracker = context.get("progress_tracker")
+            phase_name = context.get("current_phase_name", self.name)
 
             # Check if we should use LLM
             enable_llm = context.get("enable_llm_classification", True)
@@ -589,7 +666,12 @@ class MedicationNormalizationPhase(PipelinePhase):
                     end_time=datetime.now(),
                 )
 
-            # Phase 1: Pre-filtering and deduplication
+            # Phase 1: Pre-filtering and deduplication (0-20%)
+            if progress_tracker:
+                progress_tracker.update_phase_progress(
+                    phase_name, 5.0, "Pre-filtering medications"
+                )
+
             logger.info("medication_normalization_phase1_prefiltering")
             filtered_medications = self._prefilter_medications(raw_medications)
             logger.info(
@@ -597,6 +679,13 @@ class MedicationNormalizationPhase(PipelinePhase):
                 original_count=len(raw_medications),
                 filtered_count=len(filtered_medications),
             )
+
+            if progress_tracker:
+                progress_tracker.update_phase_progress(
+                    phase_name,
+                    20.0,
+                    f"Pre-filtered to {len(filtered_medications)} medications",
+                )
 
             if not filtered_medications:
                 logger.info("no_medications_after_filtering")
@@ -632,31 +721,42 @@ class MedicationNormalizationPhase(PipelinePhase):
             llm_service = LLMService(provider)
 
             # Phase 2: Batch normalization with parallel processing
-            logger.info("medication_normalization_phase2_batch_processing")
-
-            # Update progress tracker for start of normalization
-            progress_tracker = context.get("progress_tracker")
+            # Phase 2: Batch processing (20-90%)
             if progress_tracker:
                 progress_tracker.update_phase_progress(
-                    "medication_normalization",
-                    0.0,
-                    f"Starting normalization of {len(filtered_medications)} medications...",
+                    phase_name,
+                    25.0,
+                    f"Starting LLM normalization of {len(filtered_medications)} medications",
                 )
 
+            logger.info("medication_normalization_phase2_batch_processing")
+
             normalized_drugs = await self._batch_normalize_medications(
-                llm_service, filtered_medications, context
+                llm_service, filtered_medications, context, progress_tracker, phase_name
             )
 
-            # Phase 3: Post-processing and validation
+            if progress_tracker:
+                progress_tracker.update_phase_progress(
+                    phase_name,
+                    90.0,
+                    f"Completed LLM processing, found {len(normalized_drugs)} valid drugs",
+                )
+
+            # Phase 3: Post-processing and validation (90-100%)
+            if progress_tracker:
+                progress_tracker.update_phase_progress(
+                    phase_name, 95.0, "Post-processing and validating results"
+                )
+
             logger.info("medication_normalization_phase3_postprocessing")
             final_results = self._postprocess_normalized_medications(normalized_drugs)
 
-            # Update progress tracker for completion
+            # Complete the phase
             if progress_tracker:
                 progress_tracker.update_phase_progress(
-                    "medication_normalization",
+                    phase_name,
                     100.0,
-                    f"Normalization complete - {len(final_results)} valid oncology drugs found",
+                    f"Normalization complete - {len(final_results)} valid drugs found",
                 )
 
             # Store results
@@ -748,7 +848,12 @@ class MedicationNormalizationPhase(PipelinePhase):
         return filtered[:100]  # Limit to first 100 unique meds for performance
 
     async def _batch_normalize_medications(
-        self, llm_service: "LLMService", medications: List[str], context: Dict[str, Any]
+        self,
+        llm_service: "LLMService",
+        medications: List[str],
+        context: Dict[str, Any],
+        progress_tracker=None,
+        phase_name: str = "medication_normalization",
     ) -> Dict[str, Any]:
         """Phase 2: Batch process medications with parallel execution."""
         import asyncio
@@ -793,6 +898,9 @@ class MedicationNormalizationPhase(PipelinePhase):
                     "processing_batch",
                     batch_num=batch_num,
                     medications=len(batch_medications),
+                    medication_list=batch_medications[:3] + ["..."]
+                    if len(batch_medications) > 3
+                    else batch_medications,
                 )
                 batch_results = {}
 
@@ -807,9 +915,23 @@ class MedicationNormalizationPhase(PipelinePhase):
                     batch_prompts.append((prompt, system))
 
                 try:
+                    # Log which medications are being sent to LLM
+                    logger.info(
+                        "llm_batch_request_started",
+                        batch_num=batch_num,
+                        medications=batch_medications,
+                        concurrent_calls=min(3, len(batch_medications)),
+                    )
+
                     # Process batch concurrently (3 concurrent calls per batch)
                     responses = await llm_service.batch_generate(
                         batch_prompts, use_cache=True, max_concurrent=3
+                    )
+
+                    logger.info(
+                        "llm_batch_request_completed",
+                        batch_num=batch_num,
+                        responses_received=len(responses),
                     )
 
                     # Process responses
@@ -968,6 +1090,16 @@ class MedicationNormalizationPhase(PipelinePhase):
                         batch_num=batch_num,
                         valid_drugs=len(batch_results),
                     )
+
+                    # Update progress for this batch (progress between 25% and 90%)
+                    if progress_tracker:
+                        batch_progress = 25.0 + (batch_num + 1) / len(batches) * 65.0
+                        progress_tracker.update_phase_progress(
+                            phase_name,
+                            batch_progress,
+                            f"Batch {batch_num + 1}/{len(batches)} complete - {len(batch_results)} valid drugs",
+                        )
+
                     return batch_results
 
                 except Exception as e:

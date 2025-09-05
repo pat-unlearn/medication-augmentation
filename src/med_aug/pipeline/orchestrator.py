@@ -260,6 +260,10 @@ class PipelineOrchestrator:
                         error="Input validation failed",
                     )
 
+                # Add progress tracker to context for phases that need sub-progress updates
+                self.context["progress_tracker"] = self.progress_tracker
+                self.context["current_phase_name"] = phase.name
+
                 # Execute phase
                 result = await phase.execute(self.context)
 

@@ -95,6 +95,11 @@ def run_pipeline(
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Generate pipeline ID first so we can include it in logs
+    import uuid
+
+    generated_pipeline_id = str(uuid.uuid4())[:8]
+
     # Set up file logging by adding a file handler to existing loggers
     log_file = output_dir / "pipeline.log"
 
@@ -103,15 +108,198 @@ def run_pipeline(
 
     file_handler = logging.FileHandler(log_file, encoding="utf-8")
     file_handler.setLevel(logging.INFO)
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+
+    # Custom formatter for clean, human-readable logs
+    class HumanReadableFormatter(logging.Formatter):
+        def __init__(self, pipeline_id=None):
+            super().__init__()
+            self.pipeline_id = pipeline_id
+
+        def format(self, record):
+            # Get timestamp and module name
+            timestamp = self.formatTime(record, "%Y-%m-%d %H:%M:%S")
+            # Use specific module paths instead of generic names like 'phases'
+            if record.name:
+                # Remove 'med_aug.' prefix and use the remaining path for better specificity
+                if record.name.startswith("med_aug."):
+                    module = record.name.replace("med_aug.", "")
+                else:
+                    module = record.name
+            else:
+                module = "unknown"
+            msg = record.getMessage()
+
+            # Add pipeline ID prefix if available
+            pipeline_prefix = f"[{self.pipeline_id}] " if self.pipeline_id else ""
+
+            # Handle structlog messages - extract key information cleanly
+            if "[info     ]" in msg and "=" in msg:
+                try:
+                    # Parse: [info     ] event_name param1=value1 param2=value2
+                    parts = msg.split("] ", 1)[1]  # Get everything after "] "
+                    event_name = parts.split()[0]  # First word is event name
+
+                    # Format important events nicely
+                    if event_name == "executing_phase":
+                        phase = self._get_param(parts, "phase")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} | ▶️  Starting: {phase}"
+
+                    elif event_name == "phase_completed":
+                        phase = self._get_param(parts, "phase")
+                        duration = self._get_param(parts, "duration")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} | ✅ Completed: {phase} ({duration})"
+
+                    elif event_name == "llm_normalization_response":
+                        med = self._get_param(parts, "medication")
+                        valid = self._get_param(parts, "is_valid")
+                        disease_specific = self._get_param(parts, "is_disease_specific")
+                        confidence = self._get_param(parts, "confidence")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} |   📊 {med}: valid={valid}, cancer_drug={disease_specific}, confidence={confidence}"
+
+                    elif event_name == "oncology_drug_accepted":
+                        med = self._get_param(parts, "medication")
+                        generic = self._get_param(parts, "generic_name")
+                        variants = self._get_param(parts, "variants")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} |   ✅ ACCEPTED: {med} → {generic} ({variants} variants)"
+
+                    elif event_name == "processing_batch":
+                        batch_num = self._get_param(parts, "batch_num")
+                        meds_count = self._get_param(parts, "medications")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} |   🔬 Processing batch {batch_num} with {meds_count} medications"
+
+                    elif event_name == "llm_batch_request_started":
+                        batch_num = self._get_param(parts, "batch_num")
+                        concurrent = self._get_param(parts, "concurrent_calls")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} |   🤖 Sending batch {batch_num} to LLM ({concurrent} concurrent calls)"
+
+                    elif event_name == "llm_batch_request_completed":
+                        batch_num = self._get_param(parts, "batch_num")
+                        responses = self._get_param(parts, "responses_received")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} |   ✅ LLM batch {batch_num} completed - {responses} responses received"
+
+                    elif event_name == "batch_completed":
+                        batch_num = self._get_param(parts, "batch_num")
+                        valid_drugs = self._get_param(parts, "valid_drugs")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} |   🔄 Batch {batch_num} complete - {valid_drugs} valid drugs"
+
+                    # Handle detailed data logging events
+                    elif event_name == "dataset_loaded":
+                        rows = self._get_param(parts, "rows")
+                        cols = self._get_param(parts, "columns")
+                        memory = self._get_param(parts, "memory_usage_mb")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} | 📊 Dataset loaded: {rows} rows, {cols} columns, {memory}MB memory"
+
+                    elif event_name == "dataset_sample":
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} | 🔍 Sample data logged for debugging"
+
+                    elif event_name == "column_identified_as_medication":
+                        col = self._get_param(parts, "column")
+                        conf = self._get_param(parts, "confidence")
+                        unique = self._get_param(parts, "unique_values")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} | ✅ Column '{col}' identified as medication (confidence: {conf}, unique values: {unique})"
+
+                    elif event_name == "columns_rejected_as_medication":
+                        cols = self._get_param(parts, "columns")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} | ❌ Columns rejected: {cols}"
+
+                    elif event_name == "extracted_from_column":
+                        col = self._get_param(parts, "column")
+                        meds = self._get_param(parts, "medications_found")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} | 🧬 Extracted {meds} medications from column '{col}'"
+
+                    elif event_name == "all_unique_medications_extracted":
+                        count = self._get_param(parts, "unique_count")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} | 📋 Total unique medications extracted: {count}"
+
+                    # Clean up other common events
+                    elif event_name in [
+                        "data_ingestion_completed",
+                        "column_analysis_completed",
+                        "medication_extraction_started",
+                    ]:
+                        clean_name = event_name.replace("_", " ").title()
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} | 📝 {clean_name}"
+
+                    elif event_name == "pipeline_initialized":
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} | 🚀 Pipeline initialized"
+
+                    else:
+                        # For other events, add appropriate emojis and context
+                        clean_name = event_name.replace("_", " ")
+
+                        # Suppress low-level LLM service noise unless it's important
+                        if module in ["service", "providers"] and event_name in [
+                            "llm_generation_started",
+                            "llm_generation_completed",
+                            "claude_cli_generation_started",
+                            "claude_cli_generation_completed",
+                            "operation_completed",
+                        ]:
+                            return ""  # Suppress these low-level logs
+
+                        if "started" in clean_name:
+                            return f"{timestamp} | {pipeline_prefix}{module:<35} | 🚦 {clean_name.title()}"
+                        elif "completed" in clean_name:
+                            return f"{timestamp} | {pipeline_prefix}{module:<35} | ✅ {clean_name.title()}"
+                        elif "saved" in clean_name or "created" in clean_name:
+                            return f"{timestamp} | {pipeline_prefix}{module:<35} | 💾 {clean_name.title()}"
+                        elif "failed" in clean_name or "error" in clean_name:
+                            return f"{timestamp} | {pipeline_prefix}{module:<35} | ❌ {clean_name.title()}"
+                        else:
+                            return f"{timestamp} | {pipeline_prefix}{module:<35} | 📝 {clean_name.title()}"
+
+                except (IndexError, AttributeError):
+                    pass  # Fall through to default formatting
+
+            # Default formatting for regular log messages - preserve level but remove redundancy
+            level_emoji = {
+                "INFO": "ℹ️",
+                "WARNING": "⚠️",
+                "ERROR": "❌",
+                "DEBUG": "🐛",
+            }.get(record.levelname, "📝")
+
+            # Clean up any remaining [info     ] patterns
+            clean_msg = (
+                msg.replace("[info     ]", "")
+                .replace("[warning  ]", "")
+                .replace("[error    ]", "")
+                .strip()
+            )
+
+            # Ensure every message has context emoji
+            if not level_emoji:
+                level_emoji = "📝"
+
+            return f"{timestamp} | {pipeline_prefix}{module:<35} | {level_emoji} {clean_msg}"
+
+        def _get_param(self, text, param_name):
+            """Extract parameter value from 'param=value' in text"""
+            try:
+                start = text.find(f"{param_name}=") + len(f"{param_name}=")
+                if start == len(f"{param_name}=") - 1:  # param not found
+                    return "?"
+
+                # Find the end of the value (next space or end of string)
+                end = text.find(" ", start)
+                if end == -1:
+                    return text[start:].strip()
+                return text[start:end].strip()
+            except:
+                return "?"
+
+    formatter = HumanReadableFormatter(pipeline_id=generated_pipeline_id)
+
+    # Set the formatter on the file handler
     file_handler.setFormatter(formatter)
 
-    # Add to root logger and med_aug logger
-    logging.getLogger().addHandler(file_handler)
-    logging.getLogger("med_aug").addHandler(file_handler)
-    logging.getLogger("med_aug").setLevel(logging.INFO)  # Override CLI's ERROR level
+    # Add handler only to the med_aug logger to avoid duplication
+    med_aug_logger = logging.getLogger("med_aug")
+    med_aug_logger.addHandler(file_handler)
+    med_aug_logger.setLevel(logging.INFO)  # Override CLI's ERROR level
+
+    # Prevent propagation to avoid duplicate messages
+    med_aug_logger.propagate = False
 
     # Test logging
     logger = get_logger(__name__)
@@ -155,8 +343,8 @@ def run_pipeline(
         )
     )
 
-    # Create orchestrator
-    orchestrator = PipelineOrchestrator(config, pipeline_id)
+    # Create orchestrator using the generated pipeline ID
+    orchestrator = PipelineOrchestrator(config, generated_pipeline_id)
 
     # Run pipeline
     try:
