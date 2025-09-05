@@ -35,7 +35,7 @@ class CustomScraper(BaseScraper):
             base_url="https://api.example.com",
             rate_limit=1.0  # requests per second
         )
-    
+
     async def fetch_data(self, query: str) -> Dict:
         # Implementation with automatic rate limiting
         return await self._make_request(f"/search?q={query}")
@@ -341,14 +341,14 @@ infrastructure:
       host: localhost
       port: 6379
     ttl_seconds: 3600
-  
+
   rate_limiting:
     strategy: adaptive
     default_rate: 1.0
     per_domain:
       api.fda.gov: 2.0
       clinicaltrials.gov: 1.0
-  
+
   scrapers:
     timeout: 30
     max_retries: 3
@@ -405,7 +405,7 @@ async def process_medications(medications: List[str]):
     for med in medications:
         task = scraper.search_drug(med)
         tasks.append(task)
-    
+
     # Process concurrently with rate limiting
     results = await asyncio.gather(*tasks)
     return results

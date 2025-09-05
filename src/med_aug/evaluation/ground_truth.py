@@ -1,6 +1,6 @@
 """Ground truth data management for evaluation."""
 
-from typing import Dict, Set, List, Optional, Any
+from typing import Dict, List, Optional, Any
 import json
 import yaml
 from pathlib import Path

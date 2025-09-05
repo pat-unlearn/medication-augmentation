@@ -1,7 +1,6 @@
 """Unit tests for prompt templates."""
 
 import pytest
-import json
 
 from med_aug.llm.prompts import PromptTemplate, MedicationPrompts, PromptManager
 

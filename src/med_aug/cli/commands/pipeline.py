@@ -86,11 +86,37 @@ def run_pipeline(
                 "[yellow]Pipeline will create new conmeds.yml without augmenting existing entries[/yellow]"
             )
 
-    # Set output directory
+    # Set output directory with timestamped subdirectory in results/
     if output_dir is None:
-        output_dir = Path.cwd() / "output" / f"pipeline_{Path(input_file).stem}"
+        from datetime import datetime
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = Path("results") / f"run_{timestamp}_{Path(input_file).stem}"
 
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Set up file logging by adding a file handler to existing loggers
+    log_file = output_dir / "pipeline.log"
+
+    # Create file handler and add to both standard logging and structlog
+    import logging
+
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setLevel(logging.INFO)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    file_handler.setFormatter(formatter)
+
+    # Add to root logger and med_aug logger
+    logging.getLogger().addHandler(file_handler)
+    logging.getLogger("med_aug").addHandler(file_handler)
+    logging.getLogger("med_aug").setLevel(logging.INFO)  # Override CLI's ERROR level
+
+    # Test logging
+    logger = get_logger(__name__)
+    logger.info("pipeline_logging_initialized", log_file=str(log_file))
+    console.print(f"[dim]📝 Logs will be written to: {log_file}[/dim]")
 
     # Create configuration
     config = PipelineConfig(
@@ -302,8 +328,16 @@ def analyze_file(
             df = pd.read_csv(input_file, nrows=1000)
         elif input_file.suffix.lower() in [".xlsx", ".xls"]:
             df = pd.read_excel(input_file, nrows=1000)
+        elif input_file.suffix.lower() == ".sas7bdat":
+            df = pd.read_sas(input_file, format="sas7bdat")
+            # Limit rows for analysis performance
+            if len(df) > 1000:
+                df = df.head(1000)
         else:
             console.print(f"[red]Unsupported file format: {input_file.suffix}[/red]")
+            console.print(
+                "[yellow]Supported formats: .csv, .xlsx, .xls, .sas7bdat[/yellow]"
+            )
             raise typer.Exit(1)
 
         console.print(f"Loaded {len(df)} rows, {len(df.columns)} columns")
@@ -359,8 +393,13 @@ def extract_medications(
             df = pd.read_csv(input_file)
         elif input_file.suffix.lower() in [".xlsx", ".xls"]:
             df = pd.read_excel(input_file)
+        elif input_file.suffix.lower() == ".sas7bdat":
+            df = pd.read_sas(input_file, format="sas7bdat")
         else:
             console.print(f"[red]Unsupported file format: {input_file.suffix}[/red]")
+            console.print(
+                "[yellow]Supported formats: .csv, .xlsx, .xls, .sas7bdat[/yellow]"
+            )
             raise typer.Exit(1)
 
         if column not in df.columns:

@@ -581,25 +581,42 @@ class ConmedsYAMLExporter(BaseExporter):
         # Load existing conmeds as base
         base_conmeds = self._load_base_conmeds(kwargs.get("conmeds_file"))
 
-        # Extract classifications from data
-        classifications = data.get("classifications", {})
-        if not classifications:
-            # Try alternative data structures
-            if "llm_classifications" in data:
-                classifications = data["llm_classifications"].get("classifications", {})
-            elif "classification_results" in data:
-                # Convert individual results to classifications dict
-                classifications = {}
-                for result in data["classification_results"]:
-                    drug_class = result.get("drug_class")
-                    medication = result.get("medication")
-                    if drug_class and medication:
-                        if drug_class not in classifications:
-                            classifications[drug_class] = []
-                        classifications[drug_class].append(medication)
+        # Extract data - prioritize normalized medications over old classification format
+        medications_to_add = {}
 
-        # Augment base conmeds with new classifications
-        augmented_conmeds = self._augment_conmeds(base_conmeds, classifications)
+        # Check for new normalized format first
+        if "normalized_medications" in data:
+            medications_to_add = data["normalized_medications"]
+            logger.info("using_normalized_medications", count=len(medications_to_add))
+        else:
+            # Fallback to old classification format for backward compatibility
+            classifications = data.get("classifications", {})
+            if not classifications:
+                # Try alternative data structures
+                if "llm_classifications" in data:
+                    classifications = data["llm_classifications"].get(
+                        "classifications", {}
+                    )
+                elif "classification_results" in data:
+                    # Convert individual results to classifications dict
+                    classifications = {}
+                    for result in data["classification_results"]:
+                        drug_class = result.get("drug_class")
+                        medication = result.get("medication")
+                        if drug_class and medication:
+                            if drug_class not in classifications:
+                                classifications[drug_class] = []
+                            classifications[drug_class].append(medication)
+
+            # Convert old classification format to new format
+            for drug_class, medications in classifications.items():
+                conmeds_key = self._convert_drug_class_name(drug_class)
+                medications_to_add[conmeds_key] = medications
+
+            logger.info("using_legacy_classifications", count=len(medications_to_add))
+
+        # Augment base conmeds with new medications
+        augmented_conmeds = self._augment_conmeds(base_conmeds, medications_to_add)
 
         # Add metadata as comments
         yaml_content = self._generate_yaml_with_metadata(augmented_conmeds, title)

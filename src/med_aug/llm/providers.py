@@ -232,11 +232,12 @@ class ClaudeCLIProvider(LLMProvider):
         Returns:
             Simplified direct prompt
         """
+        # Import re at the top of the method
+        import re
+
         # Check if this is a medication classification prompt
         if "classify" in prompt.lower() and "medication" in prompt.lower():
             # Extract medication name from prompt
-            import re
-
             med_match = re.search(r"Medication:\s*([^\n]+)", prompt)
             if med_match:
                 medication = med_match.group(1).strip()
@@ -254,13 +255,21 @@ class ClaudeCLIProvider(LLMProvider):
                 medication = med_match.group(1).strip()
                 return f"Is '{medication}' a valid medication name? Answer: Yes or No"
 
+        # Check if this is a normalization prompt - use the full prompt with system context
+        if "normalize" in prompt.lower() and "medication" in prompt.lower():
+            # For normalization, preserve the full prompt structure with system context
+            full_prompt = prompt
+            if system:
+                full_prompt = f"{system}\n\n{prompt}"
+            return full_prompt
+
         # For other prompts, create a simple version
         full_prompt = prompt
         if system:
             full_prompt = f"{system}\n\n{prompt}"
 
-        # Truncate if too long and add direct instruction
-        if len(full_prompt) > 500:
+        # Truncate if too long and add direct instruction (but don't truncate normalization prompts)
+        if len(full_prompt) > 500 and "normalize" not in prompt.lower():
             full_prompt = full_prompt[:400] + "...\n\nAnswer directly and concisely."
 
         return full_prompt

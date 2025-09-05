@@ -58,6 +58,73 @@ class MedicationPrompts:
     """Collection of medication-related prompt templates."""
 
     @staticmethod
+    def normalization_prompt() -> PromptTemplate:
+        """Prompt for normalizing medication names and finding variants."""
+        return PromptTemplate(
+            name="medication_normalization",
+            system=(
+                "You are a pharmaceutical expert specializing in medication naming and standardization. "
+                "Your task is to normalize medication names to their standard generic form and "
+                "identify all known brand name variants. Focus on providing the canonical drug name "
+                "that would be used in clinical databases, not therapeutic classifications."
+            ),
+            user_template=(
+                "Normalize the following medication name and find its variants:\n\n"
+                "Medication: $medication\n"
+                "Disease Context: $disease\n\n"
+                "Tasks:\n"
+                "1. Identify the standard generic name (lowercase)\n"
+                "2. Find all known brand names and variants\n"
+                "3. Determine if this is a valid medication for the specified disease context\n"
+                "4. Provide high confidence if this is a real medication used in this therapeutic area"
+            ),
+            output_format=(
+                "Return a JSON object with the following structure:\n"
+                "{\n"
+                '  "input_medication": "the input medication name",\n'
+                '  "generic_name": "standard generic name (lowercase)",\n'
+                '  "brand_names": ["list", "of", "brand", "names"],\n'
+                '  "is_disease_specific_drug": true/false,\n'
+                '  "is_valid_medication": true/false,\n'
+                '  "confidence": 0.0-1.0,\n'
+                '  "reasoning": "explanation for identification"\n'
+                "}"
+            ),
+            examples=[
+                {
+                    "input": "Keytruda for NSCLC",
+                    "output": json.dumps(
+                        {
+                            "input_medication": "Keytruda",
+                            "generic_name": "pembrolizumab",
+                            "brand_names": ["Keytruda", "KEYTRUDA"],
+                            "is_disease_specific_drug": True,
+                            "is_valid_medication": True,
+                            "confidence": 1.0,
+                            "reasoning": "Keytruda is the brand name for pembrolizumab, a PD-1 inhibitor used in cancer treatment",
+                        },
+                        indent=2,
+                    ),
+                },
+                {
+                    "input": "osimertinib",
+                    "output": json.dumps(
+                        {
+                            "input_medication": "osimertinib",
+                            "generic_name": "osimertinib",
+                            "brand_names": ["Tagrisso"],
+                            "is_disease_specific_drug": True,
+                            "is_valid_medication": True,
+                            "confidence": 1.0,
+                            "reasoning": "Osimertinib is the generic name, marketed as Tagrisso, used for EGFR-mutated NSCLC",
+                        },
+                        indent=2,
+                    ),
+                },
+            ],
+        )
+
+    @staticmethod
     def classification_prompt() -> PromptTemplate:
         """Prompt for classifying medications."""
         return PromptTemplate(
@@ -286,6 +353,7 @@ class PromptManager:
 
     def _load_default_templates(self):
         """Load default medication prompts."""
+        self.templates["normalization"] = MedicationPrompts.normalization_prompt()
         self.templates["classification"] = MedicationPrompts.classification_prompt()
         self.templates["validation"] = MedicationPrompts.validation_prompt()
         self.templates["augmentation"] = MedicationPrompts.augmentation_prompt()

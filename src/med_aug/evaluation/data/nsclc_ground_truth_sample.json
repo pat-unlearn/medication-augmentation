@@ -9,7 +9,7 @@
   "entries": [
     {
       "medication": "pembrolizumab",
-      "drug_class": "taking_pembrolizumab", 
+      "drug_class": "taking_pembrolizumab",
       "confidence": 1.0,
       "source": "expert_validation",
       "notes": "PD-1 inhibitor, FDA approved for NSCLC",
@@ -20,7 +20,7 @@
       "medication": "keytruda",
       "drug_class": "taking_pembrolizumab",
       "confidence": 1.0,
-      "source": "expert_validation", 
+      "source": "expert_validation",
       "notes": "Brand name for pembrolizumab",
       "validated_by": "clinical_expert",
       "validated_at": "2025-09-03"
@@ -31,7 +31,7 @@
       "confidence": 1.0,
       "source": "expert_validation",
       "notes": "EGFR inhibitor for EGFR-positive NSCLC",
-      "validated_by": "clinical_expert", 
+      "validated_by": "clinical_expert",
       "validated_at": "2025-09-03"
     },
     {
@@ -54,7 +54,7 @@
     },
     {
       "medication": "opdivo",
-      "drug_class": "taking_nivolumab", 
+      "drug_class": "taking_nivolumab",
       "confidence": 1.0,
       "source": "expert_validation",
       "notes": "Brand name for nivolumab",
@@ -66,12 +66,12 @@
       "drug_class": "taking_atezolizumab",
       "confidence": 1.0,
       "source": "expert_validation",
-      "notes": "PD-L1 inhibitor for NSCLC", 
+      "notes": "PD-L1 inhibitor for NSCLC",
       "validated_by": "clinical_expert",
       "validated_at": "2025-09-03"
     },
     {
-      "medication": "tecentriq", 
+      "medication": "tecentriq",
       "drug_class": "taking_atezolizumab",
       "confidence": 1.0,
       "source": "expert_validation",
@@ -91,7 +91,7 @@
     {
       "medication": "paclitaxel",
       "drug_class": "taking_paclitaxel",
-      "confidence": 1.0, 
+      "confidence": 1.0,
       "source": "expert_validation",
       "notes": "Taxane chemotherapy for NSCLC",
       "validated_by": "clinical_expert",
@@ -103,7 +103,7 @@
       "confidence": 1.0,
       "source": "expert_validation",
       "notes": "Brand name for paclitaxel",
-      "validated_by": "clinical_expert", 
+      "validated_by": "clinical_expert",
       "validated_at": "2025-09-03"
     },
     {
@@ -119,7 +119,7 @@
       "medication": "pemetrexed",
       "drug_class": "taking_pemetrexed",
       "confidence": 1.0,
-      "source": "expert_validation", 
+      "source": "expert_validation",
       "notes": "Antimetabolite chemotherapy for non-squamous NSCLC",
       "validated_by": "clinical_expert",
       "validated_at": "2025-09-03"
@@ -135,7 +135,7 @@
     },
     {
       "medication": "crizotinib",
-      "drug_class": "taking_crizotinib", 
+      "drug_class": "taking_crizotinib",
       "confidence": 1.0,
       "source": "expert_validation",
       "notes": "ALK inhibitor for ALK-positive NSCLC",
@@ -164,7 +164,7 @@
       "medication": "alecensa",
       "drug_class": "taking_alectinib",
       "confidence": 1.0,
-      "source": "expert_validation", 
+      "source": "expert_validation",
       "notes": "Brand name for alectinib",
       "validated_by": "clinical_expert",
       "validated_at": "2025-09-03"

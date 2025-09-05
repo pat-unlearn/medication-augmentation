@@ -1,9 +1,7 @@
 """Pipeline phase for evaluating medication classification quality."""
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from datetime import datetime
-from pathlib import Path
-import json
 
 from .phases import PipelinePhase, PhaseResult
 from ..evaluation import MedicationEvaluator, GroundTruthManager, ClassificationReport
@@ -220,7 +218,8 @@ class EvaluationPhase(PipelinePhase):
 
         # Focus on false positives (potential ground truth expansions)
         fp_evaluations = await self.llm_evaluator.evaluate_false_positives(
-            standard_report.false_positives, max_per_class=5  # Limit for cost control
+            standard_report.false_positives,
+            max_per_class=5,  # Limit for cost control
         )
 
         # Flatten results
@@ -233,9 +232,7 @@ class EvaluationPhase(PipelinePhase):
             med
             for med, conf in confidence_scores.items()
             if 0.3 <= conf <= 0.7  # Ambiguous range
-        ][
-            :10
-        ]  # Limit for cost
+        ][:10]  # Limit for cost
 
         if low_conf_meds:
             low_conf_classifications = {
@@ -305,7 +302,6 @@ class EvaluationPhase(PipelinePhase):
                 and llm_eval.alternative_classes
                 and llm_eval.confidence > 0.7
             ):
-
                 insights["classification_improvements"].append(
                     {
                         "medication": llm_eval.medication,

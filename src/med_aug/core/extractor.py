@@ -121,7 +121,10 @@ class MedicationExtractor:
         self.normalization_cache = {}
 
     def extract_from_file(
-        self, file_path: Union[str, Path], column_name: str, sample_size: Optional[int] = None
+        self,
+        file_path: Union[str, Path],
+        column_name: str,
+        sample_size: Optional[int] = None,
     ) -> ExtractionResult:
         """
         Extract medications from a specific column in a file.
@@ -147,6 +150,10 @@ class MedicationExtractor:
             df = pd.read_csv(file_path, sep="\t", nrows=sample_size)
         elif file_path.suffix.lower() in [".xlsx", ".xls"]:
             df = pd.read_excel(file_path, nrows=sample_size)
+        elif file_path.suffix.lower() == ".sas7bdat":
+            df = pd.read_sas(file_path, format="sas7bdat")
+            if sample_size and len(df) > sample_size:
+                df = df.head(sample_size)
         elif file_path.suffix.lower() == ".parquet":
             df = pd.read_parquet(file_path)
             if sample_size:

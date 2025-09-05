@@ -1,7 +1,6 @@
 """Unit tests for pipeline orchestrator."""
 
 import pytest
-import asyncio
 from pathlib import Path
 import tempfile
 import pandas as pd

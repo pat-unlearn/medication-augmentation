@@ -13,9 +13,9 @@ from .phases import (
     DataIngestionPhase,
     ColumnAnalysisPhase,
     MedicationExtractionPhase,
+    MedicationNormalizationPhase,
     WebResearchPhase,
     ValidationPhase,
-    LLMClassificationPhase,
     OutputGenerationPhase,
 )
 from .checkpoint import CheckpointManager, PipelineCheckpoint
@@ -124,9 +124,9 @@ class PipelineOrchestrator:
         if self.config.enable_validation:
             phases.append(ValidationPhase())
 
-        # Add LLM classification phase if enabled
+        # Add medication normalization phase if enabled
         if self.config.enable_llm_classification:
-            phases.append(LLMClassificationPhase())
+            phases.append(MedicationNormalizationPhase())
 
         # Add evaluation phase if enabled (after LLM classification)
         if self.config.enable_evaluation:

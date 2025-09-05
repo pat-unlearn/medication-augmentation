@@ -2,9 +2,7 @@
 
 import pytest
 from typing import List
-import tempfile
 import yaml
-from pathlib import Path
 
 from med_aug.diseases.base import (
     DrugClassConfig,

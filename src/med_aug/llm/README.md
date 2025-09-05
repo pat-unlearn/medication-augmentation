@@ -340,7 +340,7 @@ results = await classifier.classify_batch(medications)
 
 # Filter high-confidence results
 high_confidence = [
-    r for r in results 
+    r for r in results
     if r.confidence >= 0.8
 ]
 
@@ -438,13 +438,13 @@ except ParseError as e:
 # Process medications in optimal batches
 async def process_large_dataset(medications: List[str]):
     batch_size = 50  # Optimal for most providers
-    
+
     results = []
     for i in range(0, len(medications), batch_size):
         batch = medications[i:i+batch_size]
         batch_results = await classifier.classify_batch(batch)
         results.extend(batch_results)
-    
+
     return results
 ```
 
@@ -478,7 +478,7 @@ def test_classification():
         responses=["Drug class: PD-1 inhibitor\nConfidence: 0.95"]
     )
     classifier = MedicationClassifier(provider)
-    
+
     result = await classifier.classify("pembrolizumab")
     assert result.drug_class == "PD-1 inhibitor"
     assert result.confidence == 0.95

@@ -4,7 +4,7 @@ import json
 import pickle
 from pathlib import Path
 from typing import Any, Dict, Optional, List
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime
 
 from ..core.logging import get_logger

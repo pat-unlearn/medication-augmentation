@@ -1,7 +1,6 @@
 """Integration tests for full workflow."""
 
 import pytest
-from pathlib import Path
 
 from med_aug.diseases import disease_registry
 from med_aug.diseases.nsclc.module import NSCLCModule

@@ -117,6 +117,10 @@ class DataAnalyzer:
             df = pd.read_csv(file_path, sep="\t", nrows=sample_size)
         elif file_path.suffix.lower() in [".xlsx", ".xls"]:
             df = pd.read_excel(file_path, nrows=sample_size)
+        elif file_path.suffix.lower() == ".sas7bdat":
+            df = pd.read_sas(file_path, format="sas7bdat")
+            if sample_size and len(df) > sample_size:
+                df = df.head(sample_size)
         elif file_path.suffix.lower() == ".parquet":
             df = pd.read_parquet(file_path).head(sample_size)
         else:
@@ -239,28 +243,46 @@ class DataAnalyzer:
         name_lower = column_name.lower().replace("_", " ").replace("-", " ")
         score = 0.0
 
-        # Exact matches for strong indicators
-        strong_indicators = [
-            "agent",
-            "medication",
-            "drug",
-            "drugdtxt",
-            "conmed",
-            "concomitant",
+        # Negative scoring - columns that should be excluded
+        exclusion_patterns = [
+            "patient",
+            "id",
+            "dose",
+            "dosage",
+            "reason",
+            "indication",
+            "start",
+            "stop",
+            "date",
+            "time",
+            "visit",
+            "site",
+            "study",
+            "route",
+            "frequency",
+            "duration",
         ]
-        if any(indicator in name_lower.split() for indicator in strong_indicators):
+        if any(pattern in name_lower for pattern in exclusion_patterns):
+            return 0.0
+
+        # Treatment drug columns get highest priority
+        treatment_indicators = ["agent", "medication", "drug", "treatment"]
+        if any(indicator in name_lower.split() for indicator in treatment_indicators):
             score = 1.0
+
+        # Concomitant medication columns get lower priority
+        concomitant_indicators = ["drugdtxt", "conmed", "concomitant"]
+        if any(indicator in name_lower.split() for indicator in concomitant_indicators):
+            score = 0.6  # Lower than treatment drugs
+
         # Check if 'drug' is part of a compound word (like chemo_drug)
         elif "drug" in name_lower:
-            score = 1.0
+            score = 0.8
         # Partial matches for medication keywords
         elif any(keyword in name_lower for keyword in self.MEDICATION_KEYWORDS):
             score = 0.7
         # Generic terms that might contain medications
-        elif any(
-            word in name_lower
-            for word in ["name", "text", "desc", "treatment", "therapy"]
-        ):
+        elif any(word in name_lower for word in ["name", "text", "desc", "therapy"]):
             score = 0.3
 
         return score

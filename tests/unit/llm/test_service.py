@@ -1,13 +1,11 @@
 """Unit tests for LLM service."""
 
 import pytest
-import asyncio
 from pathlib import Path
 import tempfile
 
-from med_aug.llm.service import LLMService, ResponseCache, CacheEntry
+from med_aug.llm.service import LLMService, ResponseCache
 from med_aug.llm.providers import MockProvider, LLMConfig, LLMResponse
-from med_aug.llm.prompts import PromptManager
 
 
 class TestResponseCache:

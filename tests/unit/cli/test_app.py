@@ -159,7 +159,9 @@ class TestDiseasesCommand:
             mock_module.get_drug_class_by_name.side_effect = lambda name: (
                 mock_module.drug_classes[0]
                 if name == "chemotherapy"
-                else mock_module.drug_classes[1] if name == "immunotherapy" else None
+                else mock_module.drug_classes[1]
+                if name == "immunotherapy"
+                else None
             )
 
             mock_reg.list_available.return_value = ["nsclc"]

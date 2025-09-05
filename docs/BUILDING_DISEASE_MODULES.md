@@ -420,12 +420,12 @@ Creating accurate drug class configurations requires gathering information from 
 - **NCCN Guidelines** (nccn.org) - Gold standard for cancer drug classifications
   ```bash
   # Example NCCN sections to review:
-  # - "Systemic Therapy for Advanced Disease"  
+  # - "Systemic Therapy for Advanced Disease"
   # - "Targeted Therapy by Biomarker"
   # - "Adjuvant Treatment Recommendations"
   ```
 - **ASCO Guidelines** (asco.org) - Clinical practice recommendations
-- **ESMO Guidelines** (esmo.org) - European clinical guidelines  
+- **ESMO Guidelines** (esmo.org) - European clinical guidelines
 - **FDA Hematology/Oncology Approvals** - Official drug approvals and indications
 
 #### **Cardiovascular Sources:**
@@ -635,7 +635,7 @@ def get_fda_drug_approvals(disease_area: str):
     response = requests.get(api_url, params=params)
     return parse_fda_response(response.json())
 
-# ClinicalTrials.gov API example  
+# ClinicalTrials.gov API example
 def get_clinical_trials_drugs(condition: str):
     """Get drugs in clinical trials for a condition."""
     api_url = "https://clinicaltrials.gov/api/query/study_fields"

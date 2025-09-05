@@ -1,6 +1,5 @@
 """Centralized logging configuration for the medication augmentation system."""
 
-import sys
 import logging
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -309,7 +308,9 @@ class ErrorLogger:
 
 
 def setup_file_rotation(
-    log_file: Path, max_bytes: int = 10 * 1024 * 1024, backup_count: int = 5  # 10MB
+    log_file: Path,
+    max_bytes: int = 10 * 1024 * 1024,
+    backup_count: int = 5,  # 10MB
 ) -> logging.Handler:
     """
     Setup rotating file handler.

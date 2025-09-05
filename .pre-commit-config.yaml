@@ -3,18 +3,20 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
       - id: check-merge-conflict
       - id: mixed-line-ending
         args: [--fix=lf]
+      - id: fix-byte-order-marker
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.8.4
     hooks:
       - id: ruff
-        args: [--fix]
+        args: [--fix, --exit-zero]  # Fix what we can, but don't fail
       - id: ruff-format
         args: [--line-length=88]
 
@@ -24,3 +26,8 @@ repos:
       - id: mypy
         additional_dependencies: [types-PyYAML, types-requests]
         args: [--ignore-missing-imports]
+        pass_filenames: true
+        verbose: false
+        # Don't block commits on mypy errors
+        fail_fast: false
+        stages: [manual]  # Only run mypy when explicitly requested

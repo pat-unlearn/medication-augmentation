@@ -305,11 +305,37 @@ class MedicationExtractionPhase(PipelinePhase):
             all_medications = []
             extraction_results = {}
 
+            # Get column analysis results to prioritize high-confidence columns
+            column_results = context.get("column_analysis_results", [])
+
+            # Only process the top confidence column(s) to avoid noise from low-quality columns
+            if column_results:
+                # Sort by confidence and only take columns with confidence > 0.5
+                high_confidence_columns = [
+                    r.column for r in column_results if r.confidence > 0.5
+                ]
+                if high_confidence_columns:
+                    logger.info(
+                        "filtering_to_high_confidence_columns",
+                        columns=high_confidence_columns,
+                        total_available=len(columns),
+                    )
+                    columns = [col for col in columns if col in high_confidence_columns]
+                else:
+                    # Fallback to just the top column if none meet threshold
+                    logger.info("using_top_column_only", column=columns[0])
+                    columns = [columns[0]]
+
             for column in columns:
                 if column in df.columns:
                     result = extractor.extract_from_series(df[column], column)
                     extraction_results[column] = result
                     all_medications.extend(result.normalized_medications)
+                    logger.info(
+                        "extracted_from_column",
+                        column=column,
+                        medications_found=len(result.normalized_medications),
+                    )
 
             # Store in context
             context["extraction_results"] = extraction_results
@@ -523,6 +549,470 @@ class ValidationPhase(PipelinePhase):
                 end_time=datetime.now(),
                 error=str(e),
             )
+
+
+class MedicationNormalizationPhase(PipelinePhase):
+    """Phase for LLM-based medication normalization and variant discovery."""
+
+    def __init__(self):
+        """Initialize medication normalization phase."""
+        super().__init__("medication_normalization", required=False)
+        self.dependencies = ["medication_extraction"]
+
+    async def validate_inputs(self, context: Dict[str, Any]) -> bool:
+        """Check if medications are available for normalization."""
+        return bool(context.get("all_medications"))
+
+    async def execute(self, context: Dict[str, Any]) -> PhaseResult:
+        """Normalize medications and find variants using LLM with batch processing."""
+        from ..llm.service import LLMService
+        from ..llm.providers import LLMConfig, LLMModel, ProviderFactory
+
+        logger.info("medication_normalization_started")
+        perf_logger.start_operation("medication_normalization")
+
+        start_time = datetime.now()
+
+        try:
+            # Get configuration
+            disease_module = context.get("disease_module", "nsclc")
+            raw_medications = context.get("all_medications", [])
+
+            # Check if we should use LLM
+            enable_llm = context.get("enable_llm_classification", True)
+            if not enable_llm:
+                logger.info("medication_normalization_disabled")
+                return PhaseResult(
+                    phase_name=self.name,
+                    status=PhaseStatus.SKIPPED,
+                    start_time=start_time,
+                    end_time=datetime.now(),
+                )
+
+            # Phase 1: Pre-filtering and deduplication
+            logger.info("medication_normalization_phase1_prefiltering")
+            filtered_medications = self._prefilter_medications(raw_medications)
+            logger.info(
+                "prefiltering_completed",
+                original_count=len(raw_medications),
+                filtered_count=len(filtered_medications),
+            )
+
+            if not filtered_medications:
+                logger.info("no_medications_after_filtering")
+                return PhaseResult(
+                    phase_name=self.name,
+                    status=PhaseStatus.COMPLETED,
+                    start_time=start_time,
+                    end_time=datetime.now(),
+                    output_data={"normalized_medications": {}, "total_processed": 0},
+                )
+
+            # Initialize LLM service
+            provider_type = context.get("llm_provider", "claude_cli")
+            config = LLMConfig(
+                model=LLMModel.CLAUDE_3_SONNET,
+                temperature=0.0,
+                max_tokens=2048,
+                timeout=120,
+                retry_attempts=2,
+            )
+
+            provider = ProviderFactory.create(provider_type, config)
+            if not await provider.is_available():
+                logger.warning("llm_provider_not_available", provider=provider_type)
+                return PhaseResult(
+                    phase_name=self.name,
+                    status=PhaseStatus.SKIPPED,
+                    start_time=start_time,
+                    end_time=datetime.now(),
+                    error="LLM provider not available",
+                )
+
+            llm_service = LLMService(provider)
+
+            # Phase 2: Batch normalization with parallel processing
+            logger.info("medication_normalization_phase2_batch_processing")
+
+            # Update progress tracker for start of normalization
+            progress_tracker = context.get("progress_tracker")
+            if progress_tracker:
+                progress_tracker.update_phase_progress(
+                    "medication_normalization",
+                    0.0,
+                    f"Starting normalization of {len(filtered_medications)} medications...",
+                )
+
+            normalized_drugs = await self._batch_normalize_medications(
+                llm_service, filtered_medications, context
+            )
+
+            # Phase 3: Post-processing and validation
+            logger.info("medication_normalization_phase3_postprocessing")
+            final_results = self._postprocess_normalized_medications(normalized_drugs)
+
+            # Update progress tracker for completion
+            if progress_tracker:
+                progress_tracker.update_phase_progress(
+                    "medication_normalization",
+                    100.0,
+                    f"Normalization complete - {len(final_results)} valid oncology drugs found",
+                )
+
+            # Store results
+            context["normalized_medications"] = final_results
+            context["normalization_stats"] = {
+                "original_count": len(raw_medications),
+                "filtered_count": len(filtered_medications),
+                "batch_processed": len(normalized_drugs),
+                "final_valid_drugs": len(final_results),
+            }
+
+            duration = perf_logger.end_operation("medication_normalization")
+
+            logger.info(
+                "medication_normalization_completed",
+                original_count=len(raw_medications),
+                filtered_count=len(filtered_medications),
+                valid_drugs=len(final_results),
+                duration=duration,
+            )
+
+            return PhaseResult(
+                phase_name=self.name,
+                status=PhaseStatus.COMPLETED,
+                start_time=start_time,
+                end_time=datetime.now(),
+                output_data={
+                    "normalized_medications": final_results,
+                    "original_count": len(raw_medications),
+                    "filtered_count": len(filtered_medications),
+                    "valid_oncology_drugs": len(final_results),
+                },
+                metrics={
+                    "normalization_time_seconds": duration,
+                    "medications_original": len(raw_medications),
+                    "medications_filtered": len(filtered_medications),
+                    "valid_drugs_found": len(final_results),
+                    "filtering_efficiency": len(filtered_medications)
+                    / max(1, len(raw_medications)),
+                },
+            )
+
+        except Exception as e:
+            logger.error("medication_normalization_failed", error=str(e))
+            return PhaseResult(
+                phase_name=self.name,
+                status=PhaseStatus.FAILED,
+                start_time=start_time,
+                end_time=datetime.now(),
+                error=str(e),
+            )
+
+    def _prefilter_medications(self, medications: List[str]) -> List[str]:
+        """Phase 1: Pre-filter medications to reduce LLM calls."""
+        import re
+
+        filtered = []
+        seen = set()
+
+        # Common non-medication patterns
+        non_med_patterns = [
+            r"^(test|blood|lab|procedure|surgery)\b",
+            r"\b(error|unknown|n/?a|nil|none|missing)\b",
+            r"^[0-9]+$",  # Pure numbers
+            r"^[^a-zA-Z]*$",  # No letters
+        ]
+
+        for med in medications:
+            if not med or len(med.strip()) < 3:
+                continue
+
+            med_clean = med.strip().lower()
+
+            # Skip duplicates
+            if med_clean in seen:
+                continue
+
+            # Skip obvious non-medications
+            is_non_med = any(
+                re.search(pattern, med_clean, re.IGNORECASE)
+                for pattern in non_med_patterns
+            )
+            if is_non_med:
+                continue
+
+            filtered.append(med.strip())
+            seen.add(med_clean)
+
+        return filtered[:100]  # Limit to first 100 unique meds for performance
+
+    async def _batch_normalize_medications(
+        self, llm_service: "LLMService", medications: List[str], context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Phase 2: Batch process medications with parallel execution."""
+        import asyncio
+        import json
+
+        batch_size = (
+            8  # Process 8 medications per batch (smaller batches = faster completion)
+        )
+        max_concurrent = 6  # Run 6 batches concurrently (more parallelism)
+        normalized_results = {}
+        total_processed = 0
+
+        # Create batches
+        batches = [
+            medications[i : i + batch_size]
+            for i in range(0, len(medications), batch_size)
+        ]
+        logger.info(
+            "batch_normalization_started",
+            total_batches=len(batches),
+            batch_size=batch_size,
+        )
+
+        # Process batches with semaphore for concurrency control
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def process_batch(
+            batch_medications: List[str], batch_num: int
+        ) -> Dict[str, Any]:
+            async with semaphore:
+                # Update progress tracker
+                progress_tracker = context.get("progress_tracker")
+                if progress_tracker:
+                    progress_percent = (batch_num / len(batches)) * 100
+                    progress_tracker.update_phase_progress(
+                        "medication_normalization",
+                        progress_percent,
+                        f"Processing batch {batch_num + 1}/{len(batches)} ({len(batch_medications)} medications)",
+                    )
+
+                logger.info(
+                    "processing_batch",
+                    batch_num=batch_num,
+                    medications=len(batch_medications),
+                )
+                batch_results = {}
+
+                # Prepare batch prompts
+                batch_prompts = []
+                for med in batch_medications:
+                    system, prompt = llm_service.prompt_manager.format_prompt(
+                        "normalization",
+                        medication=med,
+                        disease="Non-Small Cell Lung Cancer",
+                    )
+                    batch_prompts.append((prompt, system))
+
+                try:
+                    # Process batch concurrently (3 concurrent calls per batch)
+                    responses = await llm_service.batch_generate(
+                        batch_prompts, use_cache=True, max_concurrent=3
+                    )
+
+                    # Process responses
+                    for med, response in zip(batch_medications, responses):
+                        try:
+                            # Try to parse as JSON first
+                            response_text = response.content.strip()
+                            result = None
+
+                            try:
+                                result = json.loads(response_text)
+                            except json.JSONDecodeError:
+                                # If JSON parsing fails, LLM likely returned explanatory text for non-drug
+                                # Try to extract JSON from the response if it contains it
+                                import re
+
+                                json_match = re.search(
+                                    r'\{[^{}]*"input_medication"[^{}]*\}',
+                                    response_text,
+                                    re.DOTALL,
+                                )
+                                if json_match:
+                                    try:
+                                        result = json.loads(json_match.group())
+                                    except:
+                                        pass
+
+                                if not result:
+                                    # Create a default "invalid" result for non-JSON responses
+                                    result = {
+                                        "input_medication": med,
+                                        "generic_name": "",
+                                        "brand_names": [],
+                                        "is_oncology_drug": False,
+                                        "is_valid_medication": False,
+                                        "confidence": 0.0,
+                                        "reasoning": "LLM returned non-JSON response, likely not a medication",
+                                    }
+
+                            # Debug logging for LLM responses
+                            logger.info(
+                                "llm_normalization_response",
+                                medication=med,
+                                is_valid=result.get("is_valid_medication"),
+                                is_disease_specific=result.get(
+                                    "is_disease_specific_drug",
+                                    result.get("is_oncology_drug"),
+                                ),  # Backward compatibility
+                                confidence=result.get("confidence"),
+                                response_type="json"
+                                if "json" not in response_text.lower()
+                                or "{" in response_text
+                                else "text",
+                            )
+
+                            # Relaxed criteria: lower confidence threshold and fallback for known drugs
+                            is_valid_med = result.get("is_valid_medication", False)
+                            is_disease_specific = result.get(
+                                "is_disease_specific_drug",
+                                result.get("is_oncology_drug", False),
+                            )  # Backward compatibility
+                            confidence = result.get("confidence", 0)
+
+                            # Accept if:
+                            # 1. Valid medication AND disease-specific drug with confidence > 0.5, OR
+                            # 2. Valid medication with very high confidence (> 0.8), OR
+                            # 3. Known drug names from disease module (modular approach)
+                            med_lower = med.lower()
+
+                            # Get known drugs from current disease module (modular)
+                            disease_name = context.get("disease_module", "nsclc")
+                            from ..diseases import disease_registry
+
+                            disease_module = disease_registry.get_module(disease_name)
+
+                            is_known_disease_drug = False
+                            if disease_module:
+                                # Check if medication matches any keywords from any drug class
+                                for drug_class_config in disease_module.drug_classes:
+                                    for keyword in drug_class_config.keywords:
+                                        if (
+                                            keyword.lower() in med_lower
+                                            or med_lower in keyword.lower()
+                                        ):
+                                            is_known_disease_drug = True
+                                            break
+                                    if is_known_disease_drug:
+                                        break
+
+                            should_include = (
+                                (
+                                    is_valid_med
+                                    and is_disease_specific
+                                    and confidence > 0.5
+                                )
+                                or (is_valid_med and confidence > 0.8)
+                                or (
+                                    is_known_disease_drug
+                                    and is_valid_med
+                                    and confidence > 0.3
+                                )
+                                or (
+                                    is_known_disease_drug and confidence > 0.5
+                                )  # Fallback for known drugs
+                            )
+
+                            if should_include:
+                                generic_name = result.get("generic_name", "").lower()
+                                brand_names = result.get("brand_names", [])
+
+                                # If no generic name provided but we have a known disease drug, use the input
+                                if not generic_name and is_known_disease_drug:
+                                    generic_name = med_lower
+
+                                if generic_name:
+                                    key = f"taking_{generic_name}"
+                                    all_variants = list(
+                                        set([generic_name] + brand_names)
+                                    )
+                                    batch_results[key] = all_variants
+                                    logger.info(
+                                        "oncology_drug_accepted",
+                                        medication=med,
+                                        generic_name=generic_name,
+                                        variants=len(all_variants),
+                                        reason="json_parsed"
+                                        if is_valid_med
+                                        else "known_drug_fallback",
+                                    )
+                            else:
+                                logger.debug(
+                                    "disease_drug_rejected",
+                                    medication=med,
+                                    reason=f"valid:{is_valid_med}, disease_specific:{is_disease_specific}, conf:{confidence}, known_in_module:{is_known_disease_drug}",
+                                )
+
+                        except Exception as e:
+                            logger.warning(
+                                "batch_medication_processing_failed",
+                                medication=med,
+                                error=str(e),
+                            )
+                            continue
+
+                    # Update progress when batch completes
+                    if progress_tracker:
+                        completed_percent = ((batch_num + 1) / len(batches)) * 100
+                        progress_tracker.update_phase_progress(
+                            "medication_normalization",
+                            completed_percent,
+                            f"Completed batch {batch_num + 1}/{len(batches)} - {len(batch_results)} valid drugs found",
+                        )
+
+                    logger.info(
+                        "batch_completed",
+                        batch_num=batch_num,
+                        valid_drugs=len(batch_results),
+                    )
+                    return batch_results
+
+                except Exception as e:
+                    logger.error(
+                        "batch_processing_failed", batch_num=batch_num, error=str(e)
+                    )
+                    return {}
+
+        # Execute all batches concurrently
+        batch_tasks = [process_batch(batch, i) for i, batch in enumerate(batches)]
+        batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+
+        # Combine results
+        for result in batch_results:
+            if isinstance(result, dict):
+                normalized_results.update(result)
+            else:
+                logger.warning("batch_result_error", error=str(result))
+
+        logger.info(
+            "batch_normalization_completed", total_drugs=len(normalized_results)
+        )
+        return normalized_results
+
+    def _postprocess_normalized_medications(
+        self, normalized_drugs: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Phase 3: Post-process and validate normalized medications."""
+        final_results = {}
+
+        for key, variants in normalized_drugs.items():
+            if not key or not variants:
+                continue
+
+            # Clean variants
+            clean_variants = []
+            for variant in variants:
+                if variant and isinstance(variant, str) and len(variant.strip()) > 2:
+                    clean_variants.append(variant.strip())
+
+            if clean_variants:
+                final_results[key] = list(set(clean_variants))  # Remove duplicates
+
+        logger.info("postprocessing_completed", final_count=len(final_results))
+        return final_results
 
 
 class LLMClassificationPhase(PipelinePhase):
@@ -745,18 +1235,30 @@ class OutputGenerationPhase(PipelinePhase):
                         artifacts.append(str(class_csv))
 
             # Export conmeds.yml - THE KEY OUTPUT FOR PRD GOAL
-            if context.get("llm_classifications") or context.get(
-                "classification_results"
+            if (
+                context.get("normalized_medications")
+                or context.get("llm_classifications")
+                or context.get("classification_results")
             ):
                 from ..output.exporters import ConmedsYAMLExporter
 
                 conmeds_file = output_path / "conmeds_augmented.yml"
                 exporter = ConmedsYAMLExporter()
 
-                # Prepare data for export
+                # Prepare data for export - prioritize normalized medications
                 export_data = {}
-                if context.get("llm_classifications"):
+                if context.get("normalized_medications"):
+                    export_data["normalized_medications"] = context[
+                        "normalized_medications"
+                    ]
+                    logger.info(
+                        "exporting_normalized_medications",
+                        count=len(context["normalized_medications"]),
+                    )
+                elif context.get("llm_classifications"):
+                    # Fallback to old classification format
                     export_data.update(context["llm_classifications"])
+                    logger.info("exporting_legacy_classifications")
                 if context.get("classification_results"):
                     export_data["classification_results"] = context[
                         "classification_results"

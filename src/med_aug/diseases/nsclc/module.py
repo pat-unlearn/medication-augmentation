@@ -484,13 +484,9 @@ Many drugs may belong to multiple categories (e.g., Crizotinib is both ALK and R
                 ):
                     return True
 
-        # For unknown medications in unknown classes, be permissive to allow discovery
-        # For known classes with unknown medications, return False to maintain accuracy
-        if drug_class in known_nsclc_meds:
-            return False
-
-        # For completely unknown drug classes, be permissive
-        return True
+        # For unknown medications in any drug class, return False to maintain accuracy
+        # Only return True for medications that explicitly match keywords or known drugs
+        return False
 
     def get_medication_notes(self, medication: str) -> str:
         """Get NSCLC-specific notes about a medication."""

@@ -5,7 +5,7 @@ import json
 from abc import ABC, abstractmethod
 from typing import Any, Optional
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 import structlog
 
 logger = structlog.get_logger()

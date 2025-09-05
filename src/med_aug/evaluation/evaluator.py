@@ -1,9 +1,7 @@
 """Main evaluation engine for medication classification."""
 
-from typing import Dict, List, Set, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple, Any
 from collections import defaultdict, Counter
-import json
-from pathlib import Path
 
 from .metrics import EvaluationMetrics, ClassificationMetrics, ClassificationReport
 from .ground_truth import GroundTruthManager
