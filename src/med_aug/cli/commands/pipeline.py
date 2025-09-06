@@ -154,7 +154,9 @@ def run_pipeline(
                         valid = self._get_param(parts, "is_valid")
                         disease_specific = self._get_param(parts, "is_disease_specific")
                         confidence = self._get_param(parts, "confidence")
-                        return f"{timestamp} | {pipeline_prefix}{module:<35} |   📊 {med}: valid={valid}, cancer_drug={disease_specific}, confidence={confidence}"
+                        batch_num = self._get_param(parts, "batch_num")
+                        raw_response = self._get_param(parts, "raw_llm_response")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} |   📊 Batch {batch_num}: {med} → valid={valid}, cancer_drug={disease_specific}, confidence={confidence}\n{timestamp} | {pipeline_prefix}{module:<35} |      Raw LLM: {raw_response[:100]}..."
 
                     elif event_name == "oncology_drug_accepted":
                         med = self._get_param(parts, "medication")
@@ -181,6 +183,23 @@ def run_pipeline(
                         batch_num = self._get_param(parts, "batch_num")
                         valid_drugs = self._get_param(parts, "valid_drugs")
                         return f"{timestamp} | {pipeline_prefix}{module:<35} |   🔄 Batch {batch_num} complete - {valid_drugs} valid drugs"
+                    
+                    elif event_name == "medication_accepted_for_normalization":
+                        input_med = self._get_param(parts, "input_medication")
+                        generic = self._get_param(parts, "generic_name")
+                        confidence = self._get_param(parts, "confidence")
+                        is_disease = self._get_param(parts, "is_disease_specific")
+                        batch_num = self._get_param(parts, "batch_num")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} |   ✅ ACCEPTED Batch {batch_num}: '{input_med}' → {generic} (confidence: {confidence}, disease-specific: {is_disease})"
+                        
+                    elif event_name == "medication_rejected_from_normalization":
+                        input_med = self._get_param(parts, "input_medication")
+                        confidence = self._get_param(parts, "confidence")
+                        is_valid = self._get_param(parts, "is_valid")
+                        is_disease = self._get_param(parts, "is_disease_specific")
+                        batch_num = self._get_param(parts, "batch_num")
+                        reasoning = self._get_param(parts, "reasoning")
+                        return f"{timestamp} | {pipeline_prefix}{module:<35} |   ❌ REJECTED Batch {batch_num}: '{input_med}' (valid: {is_valid}, disease: {is_disease}, conf: {confidence})\n{timestamp} | {pipeline_prefix}{module:<35} |      Reason: {reasoning[:100]}..."
 
                     # Handle detailed data logging events
                     elif event_name == "dataset_loaded":
@@ -251,20 +270,24 @@ def run_pipeline(
                                 else:
                                     return f"{timestamp} | {pipeline_prefix}{module:<35} |     ✅ LLM normalization completed"
 
-                            elif event_name in [
-                                "claude_cli_generation_started",
-                                "claude_cli_generation_completed",
-                            ]:
-                                # These are provider-level details, show with context
-                                action = (
-                                    "started"
-                                    if "started" in event_name
-                                    else "completed"
-                                )
+                            elif event_name == "claude_cli_generation_started":
+                                # Show detailed Claude CLI start with prompt preview
+                                prompt_preview = self._get_param(parts, "prompt_preview")
+                                model = self._get_param(parts, "model")
                                 if medication and medication != "?":
-                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |       🔧 Claude CLI {action}: {medication}"
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |       🔧 Claude CLI ({model}) starting: {medication}\n{timestamp} | {pipeline_prefix}{module:<35} |          Prompt: {prompt_preview}"
                                 else:
-                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |       🔧 Claude CLI {action}"
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |       🔧 Claude CLI ({model}) started"
+                                    
+                            elif event_name == "claude_cli_generation_completed":
+                                # Show response preview for debugging
+                                response_preview = self._get_param(parts, "response_preview")
+                                response_length = self._get_param(parts, "response_length")
+                                model = self._get_param(parts, "model")
+                                if medication and medication != "?":
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |       ✅ Claude CLI ({model}) completed: {medication} ({response_length} chars)\n{timestamp} | {pipeline_prefix}{module:<35} |          Response: {response_preview[:150]}..."
+                                else:
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |       ✅ Claude CLI ({model}) completed ({response_length} chars)"
 
                         if "started" in clean_name:
                             return f"{timestamp} | {pipeline_prefix}{module:<35} | 🚦 {clean_name.title()}"

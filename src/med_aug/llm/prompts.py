@@ -65,28 +65,42 @@ class MedicationPrompts:
             name="medication_normalization",
             system=(
                 "You are a pharmaceutical expert specializing in medication naming and standardization for $disease treatment. "
-                "CRITICAL SAFETY REQUIREMENT: You must ONLY process medications that are actually used for $disease treatment. "
-                "REJECT all non-therapeutic medications including: antibiotics, antacids, vitamins, pain relievers, "
-                "blood pressure medications, antidepressants, laxatives, IV fluids, and any supportive care drugs "
-                "unless they are specifically indicated for $disease. "
-                "Only normalize medications that are direct therapeutic agents for the specified disease context."
+                "IMPORTANT: Recognize and process ALL therapeutic agents used for $disease including:\n"
+                "- Single agent medications (generic and brand names)\n"
+                "- Combination therapies (e.g., 'Drug A + Drug B')\n"
+                "- Chemotherapy protocols and regimens (e.g., FOLFOX, FOLFIRI, R-CHOP, ABVD)\n"
+                "- Targeted therapies, immunotherapies, and biologics\n"
+                "- Clinical trial drug codes and investigational agents\n\n"
+                "For combination therapies:\n"
+                "- Parse multi-drug combinations into their components\n"
+                "- Recognize standard protocol abbreviations (e.g., FOLFOX = Folinic acid + Fluorouracil + Oxaliplatin)\n"
+                "- Handle variations like 'FF' for FOLFIRI or 'mFOLFOX' for modified FOLFOX\n\n"
+                "REJECT only medications that are clearly NOT therapeutic for $disease, such as:\n"
+                "- General supportive care (unless disease-specific)\n"
+                "- Unrelated chronic disease medications\n"
+                "- IV fluids and electrolytes (unless part of a protocol)"
             ),
             user_template=(
                 "Normalize the following medication name and find its variants:\n\n"
                 "Medication: $medication\n"
                 "Disease Context: $disease\n\n"
                 "Tasks:\n"
-                "1. Identify the standard generic name (lowercase)\n"
-                "2. Find all known brand names and variants\n"
-                "3. Determine if this is a valid medication for the specified disease context\n"
-                "4. Provide high confidence if this is a real medication used in this therapeutic area"
+                "1. Identify if this is a single drug, combination therapy, or treatment protocol\n"
+                "2. For combinations/protocols: list all component drugs\n"
+                "3. Find ALL known brand names, biosimilars, and international variants\n"
+                "4. Include common abbreviations and alternative spellings\n"
+                "5. Determine if this is a valid therapeutic agent for $disease\n"
+                "6. Be INCLUSIVE - when in doubt about a cancer therapy, include it"
             ),
             output_format=(
                 "Return a JSON object with the following structure:\n"
                 "{\n"
                 '  "input_medication": "the input medication name",\n'
-                '  "generic_name": "standard generic name (lowercase)",\n'
-                '  "brand_names": ["list", "of", "brand", "names"],\n'
+                '  "medication_type": "single/combination/protocol",\n'
+                '  "generic_name": "standard generic name (lowercase) or protocol name",\n'
+                '  "brand_names": ["comprehensive", "list", "of", "all", "brand", "names", "and", "biosimilars"],\n'
+                '  "components": ["list", "of", "component", "drugs", "if", "combination"],\n'
+                '  "alternative_names": ["abbreviations", "international", "names", "variations"],\n'
                 '  "is_disease_specific_drug": true/false,\n'
                 '  "is_valid_medication": true/false,\n'
                 '  "confidence": 0.0-1.0,\n'
@@ -99,8 +113,11 @@ class MedicationPrompts:
                     "output": json.dumps(
                         {
                             "input_medication": "Keytruda",
+                            "medication_type": "single",
                             "generic_name": "pembrolizumab",
-                            "brand_names": ["Keytruda", "KEYTRUDA"],
+                            "brand_names": ["Keytruda", "KEYTRUDA", "SCH 900475", "MK-3475"],
+                            "components": [],
+                            "alternative_names": ["pembro", "anti-PD-1"],
                             "is_disease_specific_drug": True,
                             "is_valid_medication": True,
                             "confidence": 1.0,
@@ -110,16 +127,37 @@ class MedicationPrompts:
                     ),
                 },
                 {
-                    "input": "osimertinib",
+                    "input": "FOLFOX",
                     "output": json.dumps(
                         {
-                            "input_medication": "osimertinib",
-                            "generic_name": "osimertinib",
-                            "brand_names": ["Tagrisso"],
+                            "input_medication": "FOLFOX",
+                            "medication_type": "protocol",
+                            "generic_name": "folfox",
+                            "brand_names": [],
+                            "components": ["folinic acid", "fluorouracil", "oxaliplatin"],
+                            "alternative_names": ["FOLFOX4", "FOLFOX6", "mFOLFOX6", "FLOX"],
                             "is_disease_specific_drug": True,
                             "is_valid_medication": True,
                             "confidence": 1.0,
-                            "reasoning": "Osimertinib is the generic name, marketed as Tagrisso, used for EGFR-mutated NSCLC",
+                            "reasoning": "FOLFOX is a standard chemotherapy regimen combining FOLinic acid, Fluorouracil (5-FU), and OXaliplatin",
+                        },
+                        indent=2,
+                    ),
+                },
+                {
+                    "input": "Avastin + carboplatin",
+                    "output": json.dumps(
+                        {
+                            "input_medication": "Avastin + carboplatin",
+                            "medication_type": "combination",
+                            "generic_name": "bevacizumab + carboplatin",
+                            "brand_names": ["Avastin", "Mvasi", "Zirabev", "Paraplatin"],
+                            "components": ["bevacizumab", "carboplatin"],
+                            "alternative_names": ["bev + carbo", "bevacizumab/carboplatin"],
+                            "is_disease_specific_drug": True,
+                            "is_valid_medication": True,
+                            "confidence": 1.0,
+                            "reasoning": "Combination of bevacizumab (anti-VEGF) and carboplatin (platinum chemotherapy) commonly used in cancer treatment",
                         },
                         indent=2,
                     ),
