@@ -248,7 +248,18 @@ class LLMService:
                 return cached
 
         # Generate with retry logic
-        logger.info("llm_generation_started", provider=type(self.provider).__name__)
+        # Extract medication context for better logging
+        medication_context = kwargs.get('context', {})
+        medication = medication_context.get('medication')
+        batch_num = medication_context.get('batch_num')
+        
+        log_data = {"provider": type(self.provider).__name__}
+        if medication:
+            log_data["medication"] = medication
+        if batch_num is not None:
+            log_data["batch_num"] = batch_num
+            
+        logger.info("llm_generation_started", **log_data)
         perf_logger.start_operation("llm_generation")
 
         last_error = None
@@ -265,9 +276,13 @@ class LLMService:
                 latency = perf_logger.end_operation("llm_generation")
                 self.total_latency += latency
 
-                logger.info(
-                    "llm_generation_completed", attempt=attempt + 1, latency=latency
-                )
+                completion_log_data = {"attempt": attempt + 1, "latency": latency}
+                if medication:
+                    completion_log_data["medication"] = medication
+                if batch_num is not None:
+                    completion_log_data["batch_num"] = batch_num
+                    
+                logger.info("llm_generation_completed", **completion_log_data)
 
                 return response
 
@@ -312,6 +327,7 @@ class LLMService:
         prompts: List[tuple[str, Optional[str]]],
         use_cache: bool = True,
         max_concurrent: int = 3,
+        context: Optional[Dict[str, Any]] = None,
     ) -> List[LLMResponse]:
         """
         Generate responses for multiple prompts.
@@ -320,17 +336,27 @@ class LLMService:
             prompts: List of (prompt, system) tuples
             use_cache: Whether to use cache
             max_concurrent: Maximum concurrent requests
+            context: Additional context for logging (batch_num, medications, etc.)
 
         Returns:
             List of LLM responses
         """
         semaphore = asyncio.Semaphore(max_concurrent)
+        
+        # Extract context for logging
+        batch_context = context or {}
+        batch_num = batch_context.get('batch_num')
+        medications = batch_context.get('medications', [])
 
-        async def generate_with_semaphore(prompt: str, system: Optional[str]):
+        async def generate_with_semaphore(idx: int, prompt: str, system: Optional[str]):
             async with semaphore:
-                return await self.generate(prompt, system, use_cache)
+                # Add medication context for individual calls
+                individual_context = batch_context.copy()
+                if idx < len(medications):
+                    individual_context['medication'] = medications[idx]
+                return await self.generate(prompt, system, use_cache, context=individual_context)
 
-        tasks = [generate_with_semaphore(prompt, system) for prompt, system in prompts]
+        tasks = [generate_with_semaphore(idx, prompt, system) for idx, (prompt, system) in enumerate(prompts)]
 
         return await asyncio.gather(*tasks)
 

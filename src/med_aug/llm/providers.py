@@ -151,7 +151,18 @@ class ClaudeCLIProvider(LLMProvider):
         Returns:
             LLM response
         """
-        logger.info("claude_cli_generation_started", prompt_length=len(prompt))
+        # Extract medication context for better logging
+        context = kwargs.get('context', {})
+        medication = context.get('medication')
+        batch_num = context.get('batch_num')
+        
+        log_data = {"prompt_length": len(prompt)}
+        if medication:
+            log_data["medication"] = medication
+        if batch_num is not None:
+            log_data["batch_num"] = batch_num
+            
+        logger.info("claude_cli_generation_started", **log_data)
 
         # For Claude CLI, create a simple direct prompt
         # Convert complex classification prompts to simple formats
@@ -199,11 +210,16 @@ class ClaudeCLIProvider(LLMProvider):
             # Parse response
             response_text = stdout.decode("utf-8").strip()
 
-            logger.info(
-                "claude_cli_generation_completed",
-                response_length=len(response_text),
-                model=self.config.model.value,
-            )
+            completion_log_data = {
+                "response_length": len(response_text),
+                "model": self.config.model.value,
+            }
+            if medication:
+                completion_log_data["medication"] = medication
+            if batch_num is not None:
+                completion_log_data["batch_num"] = batch_num
+                
+            logger.info("claude_cli_generation_completed", **completion_log_data)
 
             return LLMResponse(
                 content=response_text,

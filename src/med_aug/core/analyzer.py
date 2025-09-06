@@ -265,15 +265,18 @@ class DataAnalyzer:
         if any(pattern in name_lower for pattern in exclusion_patterns):
             return 0.0
 
-        # Treatment drug columns get highest priority
-        treatment_indicators = ["agent", "medication", "drug", "treatment"]
-        if any(indicator in name_lower.split() for indicator in treatment_indicators):
-            score = 1.0
+        # Cancer treatment protocol columns get HIGHEST priority
+        cancer_treatment_indicators = ["trt", "acttrt", "treat", "protocol", "regimen"]
+        if any(indicator in name_lower for indicator in cancer_treatment_indicators):
+            score = 1.0  # Highest priority for actual treatment columns
+            
+        # Treatment drug columns get high priority  
+        elif any(indicator in name_lower.split() for indicator in ["agent", "medication", "treatment"]):
+            score = 0.9
 
-        # Concomitant medication columns get lower priority
-        concomitant_indicators = ["drugdtxt", "conmed", "concomitant"]
-        if any(indicator in name_lower.split() for indicator in concomitant_indicators):
-            score = 0.6  # Lower than treatment drugs
+        # Concomitant medication columns get LOWER priority (these are supportive care, not cancer treatments)
+        elif any(indicator in name_lower for indicator in ["drugdtxt", "drug", "conmed", "concomitant"]):
+            score = 0.4  # Much lower than treatment protocols
 
         # Check if 'drug' is part of a compound word (like chemo_drug)
         elif "drug" in name_lower:
@@ -362,13 +365,25 @@ class DataAnalyzer:
         reasons = []
 
         # Diversity score (medications should have many unique values)
+        # BUT treatment protocol columns can have low diversity and still be valid
         unique_ratio = series.nunique() / len(series)
-        if unique_ratio > 0.5:
+        column_name_lower = series.name.lower() if hasattr(series, 'name') and series.name else ""
+        
+        # Treatment protocol columns: even 1 unique value is valid (all patients on same protocol)
+        if any(indicator in column_name_lower for indicator in ["trt", "acttrt", "treat", "protocol", "regimen"]):
+            if series.nunique() >= 1:  # At least 1 unique treatment
+                score += 0.4
+                reasons.append(f"Treatment protocol column ({series.nunique()} protocols)")
+        # Regular medication columns need diversity
+        elif unique_ratio > 0.5:
             score += 0.4
             reasons.append(f"High diversity ({unique_ratio:.1%} unique)")
         elif unique_ratio > 0.2:
             score += 0.2
             reasons.append(f"Moderate diversity ({unique_ratio:.1%} unique)")
+        elif unique_ratio > 0.01:  # Even low diversity can indicate medication columns
+            score += 0.1
+            reasons.append(f"Low diversity ({unique_ratio:.1%} unique)")
 
         # Average length score (medications typically 5-30 characters)
         avg_length = series.str.len().mean()

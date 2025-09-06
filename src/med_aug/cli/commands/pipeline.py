@@ -227,15 +227,35 @@ def run_pipeline(
                         # For other events, add appropriate emojis and context
                         clean_name = event_name.replace("_", " ")
 
-                        # Suppress low-level LLM service noise unless it's important
-                        if module in ["service", "providers"] and event_name in [
-                            "llm_generation_started",
-                            "llm_generation_completed",
-                            "claude_cli_generation_started",
-                            "claude_cli_generation_completed",
-                            "operation_completed",
-                        ]:
-                            return ""  # Suppress these low-level logs
+                        # Add context for LLM service operations
+                        if module in ["llm.service", "llm.providers"]:
+                            # Try to extract medication or batch info from the context
+                            medication = self._get_param(parts, "medication") or self._get_param(parts, "med")
+                            batch_info = self._get_param(parts, "batch_num")
+                            
+                            if event_name == "llm_generation_started":
+                                if medication and medication != "?":
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |     🤖 Normalizing: {medication}"
+                                elif batch_info and batch_info != "?":
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |     🤖 Processing batch {batch_info}"
+                                else:
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |     🤖 LLM normalization started"
+                                    
+                            elif event_name == "llm_generation_completed":
+                                if medication and medication != "?":
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |     ✅ Completed: {medication}"
+                                elif batch_info and batch_info != "?":
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |     ✅ Batch {batch_info} completed"
+                                else:
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |     ✅ LLM normalization completed"
+                                    
+                            elif event_name in ["claude_cli_generation_started", "claude_cli_generation_completed"]:
+                                # These are provider-level details, show with context
+                                action = "started" if "started" in event_name else "completed"
+                                if medication and medication != "?":
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |       🔧 Claude CLI {action}: {medication}"
+                                else:
+                                    return f"{timestamp} | {pipeline_prefix}{module:<35} |       🔧 Claude CLI {action}"
 
                         if "started" in clean_name:
                             return f"{timestamp} | {pipeline_prefix}{module:<35} | 🚦 {clean_name.title()}"

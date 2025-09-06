@@ -26,7 +26,8 @@ class PromptTemplate:
         Returns:
             Tuple of (system_message, user_prompt)
         """
-        # Format user prompt
+        # Format both system and user templates
+        system_prompt = Template(self.system).safe_substitute(**kwargs)
         user_prompt = Template(self.user_template).safe_substitute(**kwargs)
 
         # Add output format if specified
@@ -41,7 +42,7 @@ class PromptTemplate:
                 examples_text += f"Output: {example['output']}\n\n"
             user_prompt += examples_text
 
-        return self.system, user_prompt
+        return system_prompt, user_prompt
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -63,10 +64,12 @@ class MedicationPrompts:
         return PromptTemplate(
             name="medication_normalization",
             system=(
-                "You are a pharmaceutical expert specializing in medication naming and standardization. "
-                "Your task is to normalize medication names to their standard generic form and "
-                "identify all known brand name variants. Focus on providing the canonical drug name "
-                "that would be used in clinical databases, not therapeutic classifications."
+                "You are a pharmaceutical expert specializing in medication naming and standardization for $disease treatment. "
+                "CRITICAL SAFETY REQUIREMENT: You must ONLY process medications that are actually used for $disease treatment. "
+                "REJECT all non-therapeutic medications including: antibiotics, antacids, vitamins, pain relievers, "
+                "blood pressure medications, antidepressants, laxatives, IV fluids, and any supportive care drugs "
+                "unless they are specifically indicated for $disease. "
+                "Only normalize medications that are direct therapeutic agents for the specified disease context."
             ),
             user_template=(
                 "Normalize the following medication name and find its variants:\n\n"
