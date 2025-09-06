@@ -998,7 +998,9 @@ class MedicationNormalizationPhase(PipelinePhase):
                                 "llm_normalization_response",
                                 medication=med,
                                 batch_num=batch_num,
-                                raw_llm_response=response_text[:500] + "..." if len(response_text) > 500 else response_text,
+                                raw_llm_response=response_text[:500] + "..."
+                                if len(response_text) > 500
+                                else response_text,
                                 is_valid=result.get("is_valid_medication"),
                                 is_disease_specific=result.get(
                                     "is_disease_specific_drug",
@@ -1065,7 +1067,9 @@ class MedicationNormalizationPhase(PipelinePhase):
                             if should_include:
                                 generic_name = result.get("generic_name", "").lower()
                                 brand_names = result.get("brand_names", [])
-                                medication_type = result.get("medication_type", "single")
+                                medication_type = result.get(
+                                    "medication_type", "single"
+                                )
                                 components = result.get("components", [])
                                 alternative_names = result.get("alternative_names", [])
 
@@ -1074,17 +1078,24 @@ class MedicationNormalizationPhase(PipelinePhase):
                                     generic_name = med_lower
 
                                 # Handle combination drugs and protocols
-                                if medication_type in ["combination", "protocol"] and components:
+                                if (
+                                    medication_type in ["combination", "protocol"]
+                                    and components
+                                ):
                                     # Process the combination/protocol itself
                                     if generic_name:
                                         key = f"taking_{generic_name.replace(' + ', '_').replace('+', '_').replace(' ', '_')}"
-                                        
+
                                         # Include all variations: brand names + alternative names
                                         all_variants = list(
-                                            set([generic_name] + brand_names + alternative_names)
+                                            set(
+                                                [generic_name]
+                                                + brand_names
+                                                + alternative_names
+                                            )
                                         )
                                         batch_results[key] = all_variants
-                                        
+
                                         logger.info(
                                             "combination_drug_accepted",
                                             medication=med,
@@ -1093,15 +1104,17 @@ class MedicationNormalizationPhase(PipelinePhase):
                                             components=components,
                                             variants=len(all_variants),
                                         )
-                                    
+
                                     # Also create entries for individual components
                                     for component in components:
                                         component_lower = component.lower().strip()
                                         component_key = f"taking_{component_lower.replace(' ', '_')}"
-                                        
+
                                         # Check if we already have this component
                                         if component_key not in batch_results:
-                                            batch_results[component_key] = [component_lower]
+                                            batch_results[component_key] = [
+                                                component_lower
+                                            ]
                                             logger.info(
                                                 "component_drug_added",
                                                 component=component_lower,
@@ -1109,12 +1122,17 @@ class MedicationNormalizationPhase(PipelinePhase):
                                             )
                                         else:
                                             # Add to existing entry if not already there
-                                            if component_lower not in batch_results[component_key]:
-                                                batch_results[component_key].append(component_lower)
-                                
+                                            if (
+                                                component_lower
+                                                not in batch_results[component_key]
+                                            ):
+                                                batch_results[component_key].append(
+                                                    component_lower
+                                                )
+
                                 elif generic_name:  # Single drug
                                     key = f"taking_{generic_name.replace(' ', '_')}"
-                                    
+
                                     # Log detailed acceptance
                                     logger.info(
                                         "medication_accepted_for_normalization",
@@ -1127,12 +1145,16 @@ class MedicationNormalizationPhase(PipelinePhase):
                                         is_known_disease_drug=is_known_disease_drug,
                                         confidence=confidence,
                                         reasoning=result.get("reasoning", ""),
-                                        batch_num=batch_num
+                                        batch_num=batch_num,
                                     )
-                                    
+
                                     # Include brand names and alternative names
                                     all_variants = list(
-                                        set([generic_name] + brand_names + alternative_names)
+                                        set(
+                                            [generic_name]
+                                            + brand_names
+                                            + alternative_names
+                                        )
                                     )
                                     batch_results[key] = all_variants
                                     logger.info(
@@ -1156,7 +1178,7 @@ class MedicationNormalizationPhase(PipelinePhase):
                                     generic_name=result.get("generic_name", ""),
                                     reasoning=result.get("reasoning", ""),
                                     rejection_reason="Failed criteria: valid AND disease_specific AND confidence>0.5, OR valid AND confidence>0.8, OR known_drug",
-                                    batch_num=batch_num
+                                    batch_num=batch_num,
                                 )
 
                         except Exception as e:
@@ -1200,7 +1222,9 @@ class MedicationNormalizationPhase(PipelinePhase):
                     return {}
 
         # Execute all batches concurrently
-        batch_tasks = [process_batch(batch, i, disease_module) for i, batch in enumerate(batches)]
+        batch_tasks = [
+            process_batch(batch, i, disease_module) for i, batch in enumerate(batches)
+        ]
         batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
 
         # Combine results

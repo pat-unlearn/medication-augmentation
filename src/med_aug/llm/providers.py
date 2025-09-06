@@ -164,11 +164,13 @@ class ClaudeCLIProvider(LLMProvider):
 
         # Log with meaningful context
         if medication and batch_num is not None:
-            logger.info("claude_cli_generation_started", 
-                       medication=medication,
-                       batch_num=batch_num,
-                       prompt_preview=prompt[:100] + "..." if len(prompt) > 100 else prompt,
-                       model=self.config.model.value)
+            logger.info(
+                "claude_cli_generation_started",
+                medication=medication,
+                batch_num=batch_num,
+                prompt_preview=prompt[:100] + "..." if len(prompt) > 100 else prompt,
+                model=self.config.model.value,
+            )
         else:
             logger.info("claude_cli_generation_started", **log_data)
 
@@ -229,12 +231,16 @@ class ClaudeCLIProvider(LLMProvider):
 
             # Log completion with response details
             if medication and batch_num is not None:
-                logger.info("claude_cli_generation_completed",
-                           medication=medication,
-                           batch_num=batch_num,
-                           response_preview=response_text[:200] + "..." if len(response_text) > 200 else response_text,
-                           response_length=len(response_text),
-                           model=self.config.model.value)
+                logger.info(
+                    "claude_cli_generation_completed",
+                    medication=medication,
+                    batch_num=batch_num,
+                    response_preview=response_text[:200] + "..."
+                    if len(response_text) > 200
+                    else response_text,
+                    response_length=len(response_text),
+                    model=self.config.model.value,
+                )
             else:
                 logger.info("claude_cli_generation_completed", **completion_log_data)
 

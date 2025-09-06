@@ -183,7 +183,7 @@ def run_pipeline(
                         batch_num = self._get_param(parts, "batch_num")
                         valid_drugs = self._get_param(parts, "valid_drugs")
                         return f"{timestamp} | {pipeline_prefix}{module:<35} |   🔄 Batch {batch_num} complete - {valid_drugs} valid drugs"
-                    
+
                     elif event_name == "medication_accepted_for_normalization":
                         input_med = self._get_param(parts, "input_medication")
                         generic = self._get_param(parts, "generic_name")
@@ -191,7 +191,7 @@ def run_pipeline(
                         is_disease = self._get_param(parts, "is_disease_specific")
                         batch_num = self._get_param(parts, "batch_num")
                         return f"{timestamp} | {pipeline_prefix}{module:<35} |   ✅ ACCEPTED Batch {batch_num}: '{input_med}' → {generic} (confidence: {confidence}, disease-specific: {is_disease})"
-                        
+
                     elif event_name == "medication_rejected_from_normalization":
                         input_med = self._get_param(parts, "input_medication")
                         confidence = self._get_param(parts, "confidence")
@@ -272,17 +272,23 @@ def run_pipeline(
 
                             elif event_name == "claude_cli_generation_started":
                                 # Show detailed Claude CLI start with prompt preview
-                                prompt_preview = self._get_param(parts, "prompt_preview")
+                                prompt_preview = self._get_param(
+                                    parts, "prompt_preview"
+                                )
                                 model = self._get_param(parts, "model")
                                 if medication and medication != "?":
                                     return f"{timestamp} | {pipeline_prefix}{module:<35} |       🔧 Claude CLI ({model}) starting: {medication}\n{timestamp} | {pipeline_prefix}{module:<35} |          Prompt: {prompt_preview}"
                                 else:
                                     return f"{timestamp} | {pipeline_prefix}{module:<35} |       🔧 Claude CLI ({model}) started"
-                                    
+
                             elif event_name == "claude_cli_generation_completed":
                                 # Show response preview for debugging
-                                response_preview = self._get_param(parts, "response_preview")
-                                response_length = self._get_param(parts, "response_length")
+                                response_preview = self._get_param(
+                                    parts, "response_preview"
+                                )
+                                response_length = self._get_param(
+                                    parts, "response_length"
+                                )
                                 model = self._get_param(parts, "model")
                                 if medication and medication != "?":
                                     return f"{timestamp} | {pipeline_prefix}{module:<35} |       ✅ Claude CLI ({model}) completed: {medication} ({response_length} chars)\n{timestamp} | {pipeline_prefix}{module:<35} |          Response: {response_preview[:150]}..."
