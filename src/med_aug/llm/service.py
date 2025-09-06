@@ -249,16 +249,16 @@ class LLMService:
 
         # Generate with retry logic
         # Extract medication context for better logging
-        medication_context = kwargs.get('context', {})
-        medication = medication_context.get('medication')
-        batch_num = medication_context.get('batch_num')
-        
+        medication_context = kwargs.get("context", {})
+        medication = medication_context.get("medication")
+        batch_num = medication_context.get("batch_num")
+
         log_data = {"provider": type(self.provider).__name__}
         if medication:
             log_data["medication"] = medication
         if batch_num is not None:
             log_data["batch_num"] = batch_num
-            
+
         logger.info("llm_generation_started", **log_data)
         perf_logger.start_operation("llm_generation")
 
@@ -281,7 +281,7 @@ class LLMService:
                     completion_log_data["medication"] = medication
                 if batch_num is not None:
                     completion_log_data["batch_num"] = batch_num
-                    
+
                 logger.info("llm_generation_completed", **completion_log_data)
 
                 return response
@@ -342,21 +342,26 @@ class LLMService:
             List of LLM responses
         """
         semaphore = asyncio.Semaphore(max_concurrent)
-        
+
         # Extract context for logging
         batch_context = context or {}
-        batch_num = batch_context.get('batch_num')
-        medications = batch_context.get('medications', [])
+        batch_num = batch_context.get("batch_num")
+        medications = batch_context.get("medications", [])
 
         async def generate_with_semaphore(idx: int, prompt: str, system: Optional[str]):
             async with semaphore:
                 # Add medication context for individual calls
                 individual_context = batch_context.copy()
                 if idx < len(medications):
-                    individual_context['medication'] = medications[idx]
-                return await self.generate(prompt, system, use_cache, context=individual_context)
+                    individual_context["medication"] = medications[idx]
+                return await self.generate(
+                    prompt, system, use_cache, context=individual_context
+                )
 
-        tasks = [generate_with_semaphore(idx, prompt, system) for idx, (prompt, system) in enumerate(prompts)]
+        tasks = [
+            generate_with_semaphore(idx, prompt, system)
+            for idx, (prompt, system) in enumerate(prompts)
+        ]
 
         return await asyncio.gather(*tasks)
 

@@ -269,13 +269,19 @@ class DataAnalyzer:
         cancer_treatment_indicators = ["trt", "acttrt", "treat", "protocol", "regimen"]
         if any(indicator in name_lower for indicator in cancer_treatment_indicators):
             score = 1.0  # Highest priority for actual treatment columns
-            
-        # Treatment drug columns get high priority  
-        elif any(indicator in name_lower.split() for indicator in ["agent", "medication", "treatment"]):
+
+        # Treatment drug columns get high priority
+        elif any(
+            indicator in name_lower.split()
+            for indicator in ["agent", "medication", "treatment"]
+        ):
             score = 0.9
 
         # Concomitant medication columns get LOWER priority (these are supportive care, not cancer treatments)
-        elif any(indicator in name_lower for indicator in ["drugdtxt", "drug", "conmed", "concomitant"]):
+        elif any(
+            indicator in name_lower
+            for indicator in ["drugdtxt", "drug", "conmed", "concomitant"]
+        ):
             score = 0.4  # Much lower than treatment protocols
 
         # Check if 'drug' is part of a compound word (like chemo_drug)
@@ -367,13 +373,20 @@ class DataAnalyzer:
         # Diversity score (medications should have many unique values)
         # BUT treatment protocol columns can have low diversity and still be valid
         unique_ratio = series.nunique() / len(series)
-        column_name_lower = series.name.lower() if hasattr(series, 'name') and series.name else ""
-        
+        column_name_lower = (
+            series.name.lower() if hasattr(series, "name") and series.name else ""
+        )
+
         # Treatment protocol columns: even 1 unique value is valid (all patients on same protocol)
-        if any(indicator in column_name_lower for indicator in ["trt", "acttrt", "treat", "protocol", "regimen"]):
+        if any(
+            indicator in column_name_lower
+            for indicator in ["trt", "acttrt", "treat", "protocol", "regimen"]
+        ):
             if series.nunique() >= 1:  # At least 1 unique treatment
                 score += 0.4
-                reasons.append(f"Treatment protocol column ({series.nunique()} protocols)")
+                reasons.append(
+                    f"Treatment protocol column ({series.nunique()} protocols)"
+                )
         # Regular medication columns need diversity
         elif unique_ratio > 0.5:
             score += 0.4

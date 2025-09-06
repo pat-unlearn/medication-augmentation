@@ -286,7 +286,7 @@ class ClinicalTrialsScraper(BaseScraper):
             search_url = f"{self.config.base_url}/studies"
             params = {
                 "query.cond": "Non-Small Cell Lung Cancer",
-                "filter.advanced": f'AREA[StartDate]RANGE[{start_date.strftime("%m/%d/%Y")}, {end_date.strftime("%m/%d/%Y")}]',
+                "filter.advanced": f"AREA[StartDate]RANGE[{start_date.strftime('%m/%d/%Y')}, {end_date.strftime('%m/%d/%Y')}]",
                 "format": "json",
                 "pageSize": 50,
                 "fields": "NCTId,BriefTitle,Phase,InterventionName,StartDate",

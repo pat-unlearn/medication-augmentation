@@ -909,9 +909,16 @@ class MedicationNormalizationPhase(PipelinePhase):
                 for med in batch_medications:
                     # Get disease display name from the disease module
                     from ..diseases import disease_registry
-                    disease_module_instance = disease_registry.get_module(disease_module)
-                    disease_display_name = disease_module_instance.display_name if disease_module_instance else disease_module
-                    
+
+                    disease_module_instance = disease_registry.get_module(
+                        disease_module
+                    )
+                    disease_display_name = (
+                        disease_module_instance.display_name
+                        if disease_module_instance
+                        else disease_module
+                    )
+
                     system, prompt = llm_service.prompt_manager.format_prompt(
                         "normalization",
                         medication=med,
@@ -930,11 +937,14 @@ class MedicationNormalizationPhase(PipelinePhase):
 
                     # Process batch concurrently (3 concurrent calls per batch)
                     batch_context = {
-                        'batch_num': batch_num,
-                        'medications': batch_medications
+                        "batch_num": batch_num,
+                        "medications": batch_medications,
                     }
                     responses = await llm_service.batch_generate(
-                        batch_prompts, use_cache=True, max_concurrent=3, context=batch_context
+                        batch_prompts,
+                        use_cache=True,
+                        max_concurrent=3,
+                        context=batch_context,
                     )
 
                     logger.info(

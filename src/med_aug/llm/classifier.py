@@ -399,7 +399,7 @@ class MedicationClassifier:
                         confidence = 0.0
 
                         # Try to find the corresponding line
-                        pattern = f"{j+1}."
+                        pattern = f"{j + 1}."
                         matching_line = None
                         for line in response_lines:
                             if line.startswith(pattern):

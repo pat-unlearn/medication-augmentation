@@ -230,9 +230,11 @@ def run_pipeline(
                         # Add context for LLM service operations
                         if module in ["llm.service", "llm.providers"]:
                             # Try to extract medication or batch info from the context
-                            medication = self._get_param(parts, "medication") or self._get_param(parts, "med")
+                            medication = self._get_param(
+                                parts, "medication"
+                            ) or self._get_param(parts, "med")
                             batch_info = self._get_param(parts, "batch_num")
-                            
+
                             if event_name == "llm_generation_started":
                                 if medication and medication != "?":
                                     return f"{timestamp} | {pipeline_prefix}{module:<35} |     🤖 Normalizing: {medication}"
@@ -240,7 +242,7 @@ def run_pipeline(
                                     return f"{timestamp} | {pipeline_prefix}{module:<35} |     🤖 Processing batch {batch_info}"
                                 else:
                                     return f"{timestamp} | {pipeline_prefix}{module:<35} |     🤖 LLM normalization started"
-                                    
+
                             elif event_name == "llm_generation_completed":
                                 if medication and medication != "?":
                                     return f"{timestamp} | {pipeline_prefix}{module:<35} |     ✅ Completed: {medication}"
@@ -248,10 +250,17 @@ def run_pipeline(
                                     return f"{timestamp} | {pipeline_prefix}{module:<35} |     ✅ Batch {batch_info} completed"
                                 else:
                                     return f"{timestamp} | {pipeline_prefix}{module:<35} |     ✅ LLM normalization completed"
-                                    
-                            elif event_name in ["claude_cli_generation_started", "claude_cli_generation_completed"]:
+
+                            elif event_name in [
+                                "claude_cli_generation_started",
+                                "claude_cli_generation_completed",
+                            ]:
                                 # These are provider-level details, show with context
-                                action = "started" if "started" in event_name else "completed"
+                                action = (
+                                    "started"
+                                    if "started" in event_name
+                                    else "completed"
+                                )
                                 if medication and medication != "?":
                                     return f"{timestamp} | {pipeline_prefix}{module:<35} |       🔧 Claude CLI {action}: {medication}"
                                 else:
